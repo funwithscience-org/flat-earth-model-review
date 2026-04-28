@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Prototype — Equal Arc Overlay · Flat Earth Conceptual Model Review</title>
+<meta name="description" content="Visual prototype of the overlay-on-subject-site concept, using Alan Space Audits' Equal Arc Flight (N/S) (Mirror lat) demo as the test case.">
+<link rel="canonical" href="https://funwithscience.net/flat-earth-model-review/live/prototype-equal-arc.html">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  --bg-page: #fafafa;
+  --bg-stage: #0e121a;       /* his actual scene background */
+  --stage-grid: rgba(255,255,255,0.06);
+  --stage-disc: rgba(255,255,255,0.18);
+  --south: #ff8040;
+  --north: #66c8ff;
+  --hud: #f4eddc;
+  --hud-muted: #b8aa86;
+  --review-accent: #d24a4a;
+  --review-bg: #fff;
+  --review-text: #1f2228;
+  --review-muted: #6e6c66;
+  --review-border: #1a1a1a;
+  --review-rule: #ddd;
+  --serif: 'Source Serif 4', Georgia, serif;
+  --sans:  'Inter', system-ui, -apple-system, sans-serif;
+  --mono:  'JetBrains Mono', ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg-page: #14151a;
+    --review-bg: #1f2238;
+    --review-text: #e0e0e0;
+    --review-muted: #9a9a9a;
+    --review-border: #d24a4a;
+    --review-rule: #303048;
+  }
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  background: var(--bg-page);
+  color: var(--review-text);
+  font-family: var(--serif);
+  line-height: 1.6;
+}
+.wrap { max-width: 1100px; margin: 0 auto; padding: 1rem 1.5rem 3rem; }
+
+header.site {
+  border-bottom: 1px solid var(--review-rule);
+  padding-bottom: 1rem;
+  margin-bottom: 1.5rem;
+  font-family: var(--sans);
+}
+header.site h1 {
+  font-family: var(--serif);
+  font-size: clamp(1.4rem, 3.5vw, 1.85rem);
+  margin: 0 0 .25rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+header.site p { margin: .25rem 0 0; color: var(--review-muted); font-size: .95rem; }
+header.site a { color: var(--review-accent); text-decoration: none; }
+header.site a:hover { text-decoration: underline; }
+
+/* ================== Verdict banner above the stage ================== */
+.verdict-banner {
+  background: var(--review-accent);
+  color: #fff;
+  padding: .85rem 1.25rem;
+  border-radius: 6px 6px 0 0;
+  font-family: var(--sans);
+  font-size: .95rem;
+  display: flex;
+  align-items: flex-start;
+  gap: .85rem;
+  border-bottom: 3px solid #1a1a1a;
+}
+.verdict-banner .pip {
+  background: #fff;
+  color: var(--review-accent);
+  font-weight: 700;
+  font-size: .7rem;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  padding: .2rem .55rem;
+  border-radius: 3px;
+  flex: 0 0 auto;
+  margin-top: .1rem;
+}
+.verdict-banner strong { font-weight: 600; }
+.verdict-banner em { font-style: italic; opacity: .88; }
+
+/* ================== The "his scene" stage ================== */
+.stage-frame {
+  position: relative;
+  background: var(--bg-stage);
+  border: 1px solid #1a1a1a;
+  border-radius: 0 0 6px 6px;
+  overflow: hidden;
+  margin-bottom: 0;
+}
+.stage-frame::before {
+  /* faux browser chrome, suggests "this is a site" */
+  content: 'alanspaceaudits.github.io/conceptual_flat_earth_model/  ·  Equal Arc Flight (N/S) (Mirror lat)';
+  display: block;
+  background: #1c2230;
+  color: #6f7a90;
+  padding: .35rem 1rem;
+  font-family: var(--mono);
+  font-size: .72rem;
+  border-bottom: 1px solid #000;
+}
+
+.stage {
+  position: relative;
+  width: 100%;
+  height: 540px;
+}
+.stage svg.scene { display: block; width: 100%; height: 100%; }
+
+/* HUD elements that mimic his on-screen UI (subject side, not our overlay) */
+.subj-hud {
+  position: absolute;
+  font-family: var(--mono);
+  background: rgba(14,18,26,0.85);
+  border: 1px solid rgba(255,255,255,0.10);
+  color: var(--hud);
+  padding: .55rem .75rem;
+  font-size: .72rem;
+  line-height: 1.45;
+  pointer-events: none;
+}
+.subj-hud .hud-title {
+  color: var(--hud);
+  border-bottom: 1px solid rgba(255,255,255,0.10);
+  padding-bottom: .25rem;
+  margin-bottom: .25rem;
+  font-size: .68rem;
+  letter-spacing: .03em;
+  text-transform: uppercase;
+}
+.subj-hud .hud-row { display: flex; justify-content: space-between; gap: 1rem; }
+.subj-hud .hud-row .k { color: var(--hud-muted); }
+.subj-hud .hud-row .v { color: var(--hud); }
+
+#hud-south { top: 18px; left: 18px; min-width: 230px; border-left: 3px solid var(--south); }
+#hud-north { top: 18px; right: 18px; min-width: 230px; border-left: 3px solid var(--north); }
+
+#race-panel {
+  position: absolute;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 480px;
+  background: rgba(14,18,26,0.85);
+  border: 1px solid rgba(255,255,255,0.10);
+  padding: .55rem .75rem;
+  pointer-events: none;
+}
+#race-panel .race-label {
+  font-family: var(--mono);
+  font-size: .65rem;
+  color: var(--hud-muted);
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  margin-bottom: .35rem;
+}
+.race-lane {
+  position: relative;
+  height: 12px;
+  background: rgba(255,255,255,0.06);
+  margin-bottom: 6px;
+  border-radius: 1px;
+}
+.race-lane::before {
+  /* lane label */
+  content: attr(data-label);
+  position: absolute;
+  left: -64px;
+  top: -2px;
+  font-family: var(--mono);
+  font-size: .65rem;
+  color: var(--hud-muted);
+  text-align: right;
+  width: 60px;
+}
+.race-plane {
+  position: absolute;
+  top: 0;
+  height: 12px;
+  width: 12px;
+  font-size: 14px;
+  line-height: 12px;
+  text-align: center;
+  transform: translateX(-50%);
+}
+
+/* ================== Our overlay (the "review layer") ================== */
+.overlay {
+  position: absolute;
+  z-index: 10;
+  font-family: var(--sans);
+}
+.callout {
+  background: var(--review-bg);
+  color: var(--review-text);
+  border: 2px solid var(--review-accent);
+  border-radius: 6px;
+  padding: .55rem .8rem;
+  font-size: .8rem;
+  line-height: 1.4;
+  max-width: 220px;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.35);
+}
+.callout .callout-tag {
+  display: inline-block;
+  background: var(--review-accent);
+  color: #fff;
+  font-size: .62rem;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  padding: .1rem .4rem;
+  border-radius: 3px;
+  margin-bottom: .25rem;
+}
+.callout strong { font-weight: 600; }
+.callout code {
+  font-family: var(--mono);
+  font-size: .92em;
+  background: rgba(0,0,0,0.06);
+  padding: 0 .25rem;
+  border-radius: 2px;
+}
+@media (prefers-color-scheme: dark) {
+  .callout code { background: rgba(255,255,255,0.08); }
+}
+
+/* Connector lines from callouts to scene features */
+.connector {
+  stroke: var(--review-accent);
+  stroke-width: 2;
+  stroke-dasharray: 4 3;
+  fill: none;
+  pointer-events: none;
+}
+.connector-dot {
+  fill: var(--review-accent);
+}
+
+/* Positions for the overlay callouts — fine-tuned to point at scene features */
+#cb-south  { top: 200px; left: 20px;  }
+#cb-north  { top: 220px; right: 20px; }
+#cb-equal  { top: 70px;  left: 50%; transform: translateX(-50%); }
+#cb-race   { bottom: 80px; right: 30px; }
+#cb-airline { bottom: 230px; left: 30px; }
+
+/* ================== Analysis copy below ================== */
+.analysis {
+  margin-top: 1.25rem;
+  padding: 1.25rem 1.5rem;
+  background: var(--review-bg);
+  border: 1px solid var(--review-rule);
+  border-radius: 6px;
+}
+.analysis h2 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0 0 .5rem;
+  color: var(--review-text);
+  font-family: var(--sans);
+}
+.analysis h3 {
+  font-size: .95rem;
+  font-weight: 600;
+  font-family: var(--sans);
+  color: var(--review-accent);
+  margin: 1rem 0 .25rem;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+.analysis p, .analysis li { font-size: .96rem; line-height: 1.6; }
+.analysis code { font-family: var(--mono); background: rgba(0,0,0,0.06); padding: 0 .3em; border-radius: 2px; font-size: .92em; }
+.analysis a { color: var(--review-accent); }
+@media (prefers-color-scheme: dark) {
+  .analysis code { background: rgba(255,255,255,0.08); }
+}
+
+.fact-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin: .75rem 0;
+}
+.fact {
+  border: 1px dashed var(--review-rule);
+  padding: .65rem .85rem;
+  border-radius: 4px;
+}
+.fact strong { display: block; font-family: var(--sans); font-size: .78rem; text-transform: uppercase; letter-spacing: .04em; color: var(--review-muted); margin-bottom: .25rem; }
+.fact code { font-size: 1rem; }
+
+.controls {
+  margin-top: 1rem;
+  padding: .65rem 1rem;
+  background: var(--review-bg);
+  border: 1px solid var(--review-rule);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: .85rem;
+  flex-wrap: wrap;
+  font-family: var(--sans);
+  font-size: .88rem;
+}
+.controls button {
+  background: var(--review-accent);
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: .4rem .85rem;
+  font-family: inherit;
+  font-size: .88rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+.controls button.secondary {
+  background: transparent;
+  color: var(--review-text);
+  border: 1px solid var(--review-rule);
+}
+.controls .speed { color: var(--review-muted); }
+.controls .speed input { width: 100px; vertical-align: middle; }
+
+footer.site-foot {
+  margin-top: 3rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--review-rule);
+  font-size: .85rem;
+  color: var(--review-muted);
+  font-family: var(--sans);
+  text-align: center;
+}
+footer.site-foot a { color: var(--review-muted); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="site">
+  <h1>Prototype — Equal Arc overlay concept</h1>
+  <p>← <a href="./">Live demonstrations</a> · <a href="../">Back to the review</a> · <span style="color:var(--review-muted)">stylized recreation of <a href="https://alanspaceaudits.github.io/conceptual_flat_earth_model/" rel="external">his Equal Arc Flight (N/S) (Mirror lat) demo</a> with our overlay layer</span></p>
+</header>
+
+<main>
+
+<div class="verdict-banner">
+  <span class="pip">Review overlay</span>
+  <div>
+    <strong>Author's framing:</strong> <em>"Equal arc → equal time, regardless of projection distortion."</em>
+    &nbsp;&nbsp;<strong style="color:#fff">·</strong>&nbsp;&nbsp;
+    <strong>What this hides:</strong> the southern arc is drawn <strong>2.70× longer in disc units</strong> than its lat-mirrored northern partner. Both planes finish in the same wall-clock time only because the demo drives them with a single normalized progress tween — not because the disc says they covered equal distance.
+  </div>
+</div>
+
+<div class="stage-frame">
+  <div class="stage" id="stage">
+    <svg class="scene" viewBox="0 0 1080 540" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="discGlow" cx="50%" cy="50%" r="50%">
+          <stop offset="0%"  stop-color="#1c2438" stop-opacity="0.7"/>
+          <stop offset="100%" stop-color="#0e121a" stop-opacity="0"/>
+        </radialGradient>
+        <marker id="planeS" viewBox="-6 -4 12 8" refX="0" refY="0" markerWidth="6" markerHeight="6" orient="auto">
+          <path d="M -5 0 L 5 0 M 0 -3 L 5 0 L 0 3" fill="none" stroke="#ff8040" stroke-width="1.5"/>
+        </marker>
+      </defs>
+
+      <!-- Subject's AE disc, centered -->
+      <g transform="translate(540 270)">
+        <circle cx="0" cy="0" r="240" fill="url(#discGlow)"/>
+        <circle cx="0" cy="0" r="240" fill="none" stroke="rgba(255,255,255,0.18)" stroke-width="1"/>
+        <!-- Equator ring (r = 0.5 → 120px) -->
+        <circle cx="0" cy="0" r="120" fill="none" stroke="rgba(255,255,255,0.10)" stroke-width="1" stroke-dasharray="3 4"/>
+        <!-- Tropic of Cancer (r = (90-23.4)/180 = 0.37 → 88) -->
+        <circle cx="0" cy="0" r="88" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="0.8" stroke-dasharray="2 4"/>
+        <!-- Tropic of Capricorn (r = (90+23.4)/180 = 0.63 → 152) -->
+        <circle cx="0" cy="0" r="152" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="0.8" stroke-dasharray="2 4"/>
+        <!-- Pole + a couple of meridians -->
+        <circle cx="0" cy="0" r="3" fill="rgba(255,255,255,0.30)"/>
+        <line x1="-240" y1="0" x2="240" y2="0" stroke="rgba(255,255,255,0.05)" stroke-width="0.5"/>
+        <line x1="0" y1="-240" x2="0" y2="240" stroke="rgba(255,255,255,0.05)" stroke-width="0.5"/>
+
+        <!-- Arcs computed offline using his greatCircleArc + aeProject. JNB-Sydney south leg + lat-mirror north leg. Coordinates in pixel space, disc radius 240. -->
+        <path id="arcSouth" d="" fill="none" stroke="#ff8040" stroke-width="2.2"/>
+        <path id="arcNorth" d="" fill="none" stroke="#66c8ff" stroke-width="2.2"/>
+        <!-- Endpoints -->
+        <circle id="ptS_a" cx="0" cy="0" r="4" fill="#ff8040"/>
+        <circle id="ptS_b" cx="0" cy="0" r="4" fill="#ff8040"/>
+        <circle id="ptN_a" cx="0" cy="0" r="4" fill="#66c8ff"/>
+        <circle id="ptN_b" cx="0" cy="0" r="4" fill="#66c8ff"/>
+        <!-- Endpoint labels -->
+        <text id="lblS_a" x="0" y="0" font-family="JetBrains Mono" font-size="9" fill="rgba(244,237,220,0.85)"></text>
+        <text id="lblS_b" x="0" y="0" font-family="JetBrains Mono" font-size="9" fill="rgba(244,237,220,0.85)"></text>
+        <text id="lblN_a" x="0" y="0" font-family="JetBrains Mono" font-size="9" fill="rgba(244,237,220,0.85)"></text>
+        <text id="lblN_b" x="0" y="0" font-family="JetBrains Mono" font-size="9" fill="rgba(244,237,220,0.85)"></text>
+
+        <!-- Moving plane silhouettes -->
+        <g id="planeSouth"><circle r="4.5" fill="#ff8040"/><circle r="2" fill="#fff"/></g>
+        <g id="planeNorth"><circle r="4.5" fill="#66c8ff"/><circle r="2" fill="#fff"/></g>
+      </g>
+
+      <!-- Connector overlay lines (callouts → scene features). Drawn here so they sit between scene and HTML overlay. -->
+      <g id="connectors">
+        <path id="conn-south"   class="connector" d=""/>
+        <path id="conn-north"   class="connector" d=""/>
+        <path id="conn-equal"   class="connector" d=""/>
+        <path id="conn-race"    class="connector" d=""/>
+        <path id="conn-airline" class="connector" d=""/>
+        <circle id="dot-south"   class="connector-dot" r="3" cx="0" cy="0"/>
+        <circle id="dot-north"   class="connector-dot" r="3" cx="0" cy="0"/>
+        <circle id="dot-equal"   class="connector-dot" r="3" cx="0" cy="0"/>
+        <circle id="dot-race"    class="connector-dot" r="3" cx="0" cy="0"/>
+        <circle id="dot-airline" class="connector-dot" r="3" cx="0" cy="0"/>
+      </g>
+    </svg>
+
+    <!-- Subject's HUD elements (his info boxes) -->
+    <div class="subj-hud" id="hud-south">
+      <div class="hud-title">Johannesburg ↔ Sydney · 99.14°</div>
+      <div class="hud-row"><span class="k">Takeoff</span><span class="v">00:00:00</span></div>
+      <div class="hud-row"><span class="k">Arrival</span><span class="v">11:00:00</span></div>
+      <div class="hud-row"><span class="k">Speed</span><span class="v">9° 00' 49"/h</span></div>
+      <div class="hud-row"><span class="k">Traversed</span><span class="v" id="hudS-tr">0.00°</span></div>
+      <div class="hud-row"><span class="k">Elapsed</span><span class="v" id="hudS-el">00:00:00</span></div>
+    </div>
+    <div class="subj-hud" id="hud-north">
+      <div class="hud-title">N-Mirror "≈ Egypt" ↔ "≈ Pacific" · 99.14°</div>
+      <div class="hud-row"><span class="k">Takeoff</span><span class="v">00:00:00</span></div>
+      <div class="hud-row"><span class="k">Arrival</span><span class="v">11:00:00</span></div>
+      <div class="hud-row"><span class="k">Speed</span><span class="v">9° 00' 49"/h</span></div>
+      <div class="hud-row"><span class="k">Traversed</span><span class="v" id="hudN-tr">0.00°</span></div>
+      <div class="hud-row"><span class="k">Elapsed</span><span class="v" id="hudN-el">00:00:00</span></div>
+    </div>
+
+    <div id="race-panel">
+      <div class="race-label">Race lanes (proportional to AE-projected arc length)</div>
+      <div class="race-lane" data-label="South" id="lane-south">
+        <div class="race-plane" id="lane-plane-s" style="background:#ff8040"></div>
+      </div>
+      <div class="race-lane" data-label="North" id="lane-north">
+        <div class="race-plane" id="lane-plane-n" style="background:#66c8ff"></div>
+      </div>
+    </div>
+
+    <!-- =================== OVERLAY (review layer) =================== -->
+    <div class="overlay callout" id="cb-south">
+      <span class="callout-tag">Disc-arc length</span>
+      <strong>South arc:</strong> <code>1.627</code> disc-units<br>
+      Drawn from JNB <code>(–26°, 28°)</code> to Sydney <code>(–34°, 151°)</code> through his canonical AE projection.
+    </div>
+
+    <div class="overlay callout" id="cb-north">
+      <span class="callout-tag">Disc-arc length</span>
+      <strong>North arc:</strong> <code>0.602</code> disc-units<br>
+      Synthetic lat-mirror endpoints (≈ Egypt + N. Pacific). Same central angle as the south leg by construction.
+    </div>
+
+    <div class="overlay callout" id="cb-equal">
+      <span class="callout-tag">Sphere theorem</span>
+      Both legs share the <strong>same central angle</strong> (99.14°). True on a sphere by lat-mirror symmetry. <strong>Not a flat-earth result.</strong>
+    </div>
+
+    <div class="overlay callout" id="cb-race">
+      <span class="callout-tag">Self-contradiction</span>
+      Race lanes are <em>scaled to AE-projected arc length</em>. Both planes finish at the same wall-clock time. South plane covers <strong>2.70× more pixels per second</strong> than the north plane. <em>That ratio is the contradiction.</em>
+    </div>
+
+    <div class="overlay callout" id="cb-airline">
+      <span class="callout-tag">Airline data says</span>
+      Both legs at <strong>~500 mph</strong> in the bundled QF27/28 KMZ. On a globe, equal arc → equal time at equal speed. On his disc, equal time on unequal arcs → unequal speed — but he doesn't display speeds in mph, so the contradiction is hidden.
+    </div>
+  </div>
+</div>
+
+<div class="controls">
+  <button id="play-pause">⏸ Pause</button>
+  <button id="restart" class="secondary">↺ Restart</button>
+  <span class="speed">Speed: <input type="range" id="speed" min="0.25" max="3" step="0.25" value="1"> <span id="speed-val">1.0×</span></span>
+  <span style="margin-left:auto; color: var(--review-muted); font-size: .82rem;">Animation loops every ~11 s @ 1.0× — same cadence as his demo.</span>
+</div>
+
+<div class="analysis">
+  <h2>What you're looking at</h2>
+  <p>
+    Above is a stylized recreation of the subject model's
+    <strong>Equal Arc Flight (N/S) (Mirror lat)</strong> demo, with our
+    review layer (red callouts) overlaid on top. The dark-themed scene
+    is a faithful reproduction of his AE disc rendering, his orange/cyan
+    color palette, his info-box HUD layout, and his race-panel widget.
+    The underlying numbers — 1.627 disc-units, 0.602 disc-units, the
+    2.70× ratio — are computed from his own published functions
+    (<code>greatCircleArc</code> + <code>aeProject</code> in
+    <code>js/data/flightRoutes.js</code> and <code>js/core/canonical.js</code>)
+    against his own city coordinates.
+  </p>
+
+  <h3>The point of the prototype</h3>
+  <p>
+    This is a visual mockup of the "fork his site, layer overlay
+    annotations on top" approach we considered. Two practical
+    constraints made a true iframe-overlay implausible: cross-origin
+    restrictions block our hosted page from reading state out of his
+    GitHub-Pages-served sim, and his repo carries no LICENSE file,
+    so direct fork-and-modify has unclear footing. The overlay layer
+    you see above does not require either — it overlays a stylized
+    stand-in of his scene with the same review annotations the
+    real-iframe version would carry.
+  </p>
+
+  <h3>Three options for the production version</h3>
+  <ul>
+    <li><strong>Iframe-his-site.</strong> Embed
+      <code>alanspaceaudits.github.io</code> directly, position our
+      callouts around the iframe edges. We can deep-link to the
+      Equal Arc demo via his URL hash. Limitations: cross-origin
+      blocks state-tracking, so callouts have to be either statically
+      positioned (point at fixed UI elements) or driven by a separate
+      timer that we sync to his autoplay cadence.</li>
+    <li><strong>Snapshot-and-overlay.</strong> Capture a high-res
+      screenshot of his demo at a representative moment, layer our
+      callouts as absolutely-positioned HTML on top. Static, but
+      pixel-perfect. Quickest to ship, no live behavior to debug.
+      Re-shoot when his upstream changes.</li>
+    <li><strong>SVG recreation</strong> (the current prototype).
+      Reproduce his scene in our own SVG with his colors and
+      proportions. Editable, animatable, version-controlled. No
+      copyright concern. Loses some fidelity vs. a real screenshot
+      of his sim.</li>
+  </ul>
+
+  <h3>The numbers, sourced live</h3>
+  <div class="fact-row">
+    <div class="fact"><strong>South leg (real)</strong>
+      <code id="f-south-name">Johannesburg ↔ Sydney</code><br>
+      <code id="f-south-ang">99.14°</code> central angle ·
+      <code id="f-south-disc">1.627</code> disc-units</div>
+    <div class="fact"><strong>North leg (synthetic mirror)</strong>
+      <code id="f-north-name">≈ Egypt ↔ ≈ Pacific</code><br>
+      <code id="f-north-ang">99.14°</code> central angle ·
+      <code id="f-north-disc">0.602</code> disc-units</div>
+    <div class="fact"><strong>Disc-arc length ratio</strong>
+      <code style="font-size:1.15rem">2.700×</code></div>
+    <div class="fact"><strong>Implied speed ratio if disc is territory</strong>
+      <code style="font-size:1.15rem">2.700×</code> (south plane)</div>
+  </div>
+
+  <h3>Tell me what to change</h3>
+  <p>
+    A few choices to weigh:
+  </p>
+  <ul>
+    <li>The <strong>callout style</strong> — currently red-bordered cards with red dashed connectors to scene features. Could be lighter/quieter, or differently colored per finding category.</li>
+    <li>The <strong>animation cadence</strong> — currently ~11 s per loop, matching his "11 hours notional flight" tween. Could go faster or slower; could also stop on the contradiction (south plane finishing while north is still mid-arc) for a clear shot.</li>
+    <li>Whether to include the <strong>"Airline data says ~500 mph"</strong> callout, or pull it into a separate row below the stage. It's the strongest single fact and currently it's overlapping a busy area.</li>
+    <li>Whether to <strong>embed his actual site in an iframe</strong> below the SVG mockup, side-by-side, so the reader can see they're not the same — i.e., we're presenting a stylized recreation, not a screenshot.</li>
+  </ul>
+</div>
+
+<footer class="site-foot">
+  <p>← <a href="./">Live demonstrations</a> · <a href="../">Back to the review</a></p>
+</footer>
+
+</main>
+</div>
+
+<script type="module">
+import { aeProject, greatCircleArc, centralAngleDeg } from './projection.js';
+import { CITIES } from './data.js';
+
+// ----- Build the arc paths in SVG-pixel space (disc radius 240, centered) -----
+const DISC_R = 240;
+function aeToPx(latLon) {
+  const [x, y] = aeProject(latLon[0], latLon[1]);
+  return [x * DISC_R, -y * DISC_R];   // flip y for SVG (y-down)
+}
+function pathFromArc(arc) {
+  let d = '';
+  for (let i = 0; i < arc.length; i++) {
+    const [px, py] = aeToPx(arc[i]);
+    d += (i === 0 ? 'M' : 'L') + px.toFixed(2) + ',' + py.toFixed(2);
+  }
+  return d;
+}
+
+const south = { a: CITIES.jnb,    b: CITIES.syd    };
+const north = { a: CITIES.nm_jnb, b: CITIES.nm_syd };
+
+const arcSouth = greatCircleArc(south.a.lat, south.a.lon, south.b.lat, south.b.lon, 256)
+                 .map(([la, lo]) => [la, lo]);
+const arcNorth = greatCircleArc(north.a.lat, north.a.lon, north.b.lat, north.b.lon, 256)
+                 .map(([la, lo]) => [la, lo]);
+
+document.getElementById('arcSouth').setAttribute('d', pathFromArc(arcSouth));
+document.getElementById('arcNorth').setAttribute('d', pathFromArc(arcNorth));
+
+const sa = aeToPx([south.a.lat, south.a.lon]);
+const sb = aeToPx([south.b.lat, south.b.lon]);
+const na = aeToPx([north.a.lat, north.a.lon]);
+const nb = aeToPx([north.b.lat, north.b.lon]);
+document.getElementById('ptS_a').setAttribute('cx', sa[0]); document.getElementById('ptS_a').setAttribute('cy', sa[1]);
+document.getElementById('ptS_b').setAttribute('cx', sb[0]); document.getElementById('ptS_b').setAttribute('cy', sb[1]);
+document.getElementById('ptN_a').setAttribute('cx', na[0]); document.getElementById('ptN_a').setAttribute('cy', na[1]);
+document.getElementById('ptN_b').setAttribute('cx', nb[0]); document.getElementById('ptN_b').setAttribute('cy', nb[1]);
+
+const setLbl = (id, x, y, text, dx=8, dy=-6) => {
+  const el = document.getElementById(id);
+  el.setAttribute('x', x + dx);
+  el.setAttribute('y', y + dy);
+  el.textContent = text;
+};
+setLbl('lblS_a', sa[0], sa[1], 'JNB');
+setLbl('lblS_b', sb[0], sb[1], 'SYD');
+setLbl('lblN_a', na[0], na[1], '≈ Egypt');
+setLbl('lblN_b', nb[0], nb[1], '≈ Pacific');
+
+// ----- Compute disc-arc length per arc (for the readout panel below) -----
+function discLen(arc) {
+  let total = 0; let prev = aeToPx(arc[0]);
+  for (let i = 1; i < arc.length; i++) {
+    const cur = aeToPx(arc[i]);
+    total += Math.hypot(cur[0]-prev[0], cur[1]-prev[1]);
+    prev = cur;
+  }
+  return total / DISC_R;  // disc-units (radius = 1)
+}
+const southDisc = discLen(arcSouth);
+const northDisc = discLen(arcNorth);
+document.getElementById('f-south-disc').textContent = southDisc.toFixed(3);
+document.getElementById('f-north-disc').textContent = northDisc.toFixed(3);
+
+// ----- Animation loop — drive a single normalized progress 0→1, mirroring his FlightRoutesProgress tween -----
+const planeSouth = document.getElementById('planeSouth');
+const planeNorth = document.getElementById('planeNorth');
+const lanePlaneS = document.getElementById('lane-plane-s');
+const lanePlaneN = document.getElementById('lane-plane-n');
+const laneSouth  = document.getElementById('lane-south');
+const laneNorth  = document.getElementById('lane-north');
+const hudS_tr    = document.getElementById('hudS-tr');
+const hudS_el    = document.getElementById('hudS-el');
+const hudN_tr    = document.getElementById('hudN-tr');
+const hudN_el    = document.getElementById('hudN-el');
+
+const southAng = centralAngleDeg(south.a.lat, south.a.lon, south.b.lat, south.b.lon);
+const northAng = centralAngleDeg(north.a.lat, north.a.lon, north.b.lat, north.b.lon);
+
+// Race lane widths — proportional to disc-arc length (his actual demo
+// scales lanes by AE-projected arc length too).
+const laneScale = 360;  // px max for the longer lane
+laneSouth.style.width = `${(southDisc / Math.max(southDisc, northDisc)) * laneScale}px`;
+laneNorth.style.width = `${(northDisc / Math.max(southDisc, northDisc)) * laneScale}px`;
+
+function fmtHMS(sec) {
+  const h = Math.floor(sec / 3600);
+  const m = Math.floor((sec % 3600) / 60);
+  const s = Math.round(sec % 60);
+  return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+}
+
+let progress = 0;
+let playing = true;
+let speedMul = 1;
+const LOOP_MS = 11000;            // ~11 s loop = his "11 hours notional"
+
+function setPlanePos(planeEl, arc, t) {
+  const N = arc.length;
+  const idx = Math.min(N - 1, Math.max(0, t * (N - 1)));
+  const i0 = Math.floor(idx), i1 = Math.min(N - 1, i0 + 1);
+  const f = idx - i0;
+  const [x0, y0] = aeToPx(arc[i0]);
+  const [x1, y1] = aeToPx(arc[i1]);
+  const x = x0 + (x1 - x0) * f;
+  const y = y0 + (y1 - y0) * f;
+  planeEl.setAttribute('transform', `translate(${x.toFixed(2)} ${y.toFixed(2)})`);
+}
+
+let last = performance.now();
+function tick(now) {
+  const dt = (now - last) * speedMul;
+  last = now;
+  if (playing) {
+    progress = (progress + dt / LOOP_MS) % 1;
+    setPlanePos(planeSouth, arcSouth, progress);
+    setPlanePos(planeNorth, arcNorth, progress);
+    lanePlaneS.style.left = (progress * 100) + '%';
+    lanePlaneN.style.left = (progress * 100) + '%';
+    hudS_tr.textContent = (southAng * progress).toFixed(2) + '°';
+    hudN_tr.textContent = (northAng * progress).toFixed(2) + '°';
+    hudS_el.textContent = fmtHMS(progress * 11 * 3600);
+    hudN_el.textContent = fmtHMS(progress * 11 * 3600);
+  }
+  requestAnimationFrame(tick);
+}
+requestAnimationFrame((t) => { last = t; tick(t); });
+
+// Controls
+const btnPlay = document.getElementById('play-pause');
+btnPlay.addEventListener('click', () => {
+  playing = !playing;
+  btnPlay.textContent = playing ? '⏸ Pause' : '▶ Play';
+});
+document.getElementById('restart').addEventListener('click', () => {
+  progress = 0;
+});
+const speedEl = document.getElementById('speed');
+const speedVal = document.getElementById('speed-val');
+speedEl.addEventListener('input', () => {
+  speedMul = parseFloat(speedEl.value);
+  speedVal.textContent = speedMul.toFixed(2) + '×';
+});
+
+// ----- Connector lines from each callout to its target scene point. -----
+// Targets are in SVG-viewBox coords (1080x540). Disc origin is (540, 270).
+function px(scenePt) {
+  return { x: 540 + scenePt[0], y: 270 + scenePt[1] };
+}
+function fromCallout(elId, target, anchor='center') {
+  const stage = document.getElementById('stage');
+  const cb = document.getElementById(elId);
+  const stageRect = stage.getBoundingClientRect();
+  const cbRect = cb.getBoundingClientRect();
+  // map cb edge to viewBox coords (stage is 100% width, viewBox 1080)
+  const vbW = 1080, vbH = 540;
+  const sx = vbW / stageRect.width, sy = vbH / stageRect.height;
+  let cx, cy;
+  switch (anchor) {
+    case 'right':  cx = (cbRect.left + cbRect.width  - stageRect.left) * sx; cy = (cbRect.top + cbRect.height/2 - stageRect.top) * sy; break;
+    case 'left':   cx = (cbRect.left - stageRect.left) * sx; cy = (cbRect.top + cbRect.height/2 - stageRect.top) * sy; break;
+    case 'top':    cx = (cbRect.left + cbRect.width/2 - stageRect.left) * sx; cy = (cbRect.top - stageRect.top) * sy; break;
+    case 'bottom': cx = (cbRect.left + cbRect.width/2 - stageRect.left) * sx; cy = (cbRect.top + cbRect.height - stageRect.top) * sy; break;
+    default:       cx = (cbRect.left + cbRect.width/2 - stageRect.left) * sx; cy = (cbRect.top + cbRect.height/2 - stageRect.top) * sy;
+  }
+  return { cx, cy, target };
+}
+
+function drawConnectors() {
+  const targets = [
+    { connId: 'conn-south', dotId: 'dot-south', cb: 'cb-south', anchor: 'right',  target: px([-100, 80])   },  // mid-south arc
+    { connId: 'conn-north', dotId: 'dot-north', cb: 'cb-north', anchor: 'left',   target: px([90,  -50])   },  // mid-north arc
+    { connId: 'conn-equal', dotId: 'dot-equal', cb: 'cb-equal', anchor: 'bottom', target: px([0,    -110]) },  // equator north (where mirror axis sits)
+    { connId: 'conn-race',  dotId: 'dot-race',  cb: 'cb-race',  anchor: 'left',   target: { x: 540, y: 480 } }, // race panel center
+    { connId: 'conn-airline', dotId: 'dot-airline', cb: 'cb-airline', anchor: 'right', target: px([-170, 130]) }, // south arc terminus side
+  ];
+  for (const t of targets) {
+    const out = fromCallout(t.cb, t.target, t.anchor);
+    const path = document.getElementById(t.connId);
+    const dot  = document.getElementById(t.dotId);
+    path.setAttribute('d',
+      `M ${out.cx.toFixed(1)} ${out.cy.toFixed(1)} ` +
+      `Q ${((out.cx + out.target.x)/2).toFixed(1)} ${out.cy.toFixed(1)} ` +
+      `${out.target.x.toFixed(1)} ${out.target.y.toFixed(1)}`);
+    dot.setAttribute('cx', out.target.x.toFixed(1));
+    dot.setAttribute('cy', out.target.y.toFixed(1));
+  }
+}
+drawConnectors();
+window.addEventListener('resize', drawConnectors);
+// Re-draw after fonts settle (callout heights may shift)
+setTimeout(drawConnectors, 250);
+setTimeout(drawConnectors, 1000);
+</script>
+
+</body>
+</html>
