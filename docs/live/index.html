@@ -430,6 +430,31 @@ footer.site-foot a { color: var(--review-muted); }
 }
 </script>
 
+<script>
+// If we're embedded as an iframe, post our content height to the parent
+// so it can size the iframe to fit. Parent (docs/index.html) listens
+// for { type: 'femr-iframe-height', height } messages.
+(function() {
+  if (window.parent === window) return; // not in iframe
+  let lastH = 0;
+  function report() {
+    const h = Math.max(
+      document.body.scrollHeight,
+      document.documentElement.scrollHeight,
+    );
+    if (h !== lastH) {
+      lastH = h;
+      window.parent.postMessage({ type: 'femr-iframe-height', height: h }, '*');
+    }
+  }
+  window.addEventListener('load', () => setTimeout(report, 200));
+  window.addEventListener('resize', report);
+  // Also poll every 600ms — covers content height changes from scenario
+  // switches that don't fire window resize events.
+  setInterval(report, 600);
+})();
+</script>
+
 <script type="module">
 import * as THREE from 'three';
 import { aeProject, greatCircleArc, centralAngleDeg } from './projection.js';

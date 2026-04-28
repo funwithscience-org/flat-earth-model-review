@@ -1,8 +1,10 @@
 # Co-opted Demo
 
-A live page that reproduces the spatial commitments of the subject model's flight-routes demo, side-by-side with a 3D globe rendering of the same lat/lon waypoints. Both views are driven by the subject's own `greatCircleArc()` function — the disc projects through his `canonicalLatLongToDisc()`, the globe places the same lat/lon points on a unit sphere. **One input, two visualizations.** Any disagreement between them is a property of his projection, not of different math.
+A 3D globe rendering and the subject model's canonical AE disc, side-by-side, both driven by his own `greatCircleArc()` function — the disc projects through his `canonicalLatLongToDisc()`, the globe places the same lat/lon points on a unit sphere. **One input, two visualizations.** Any disagreement between them is a property of his projection, not of different math.
 
-**[Open the live demonstrations page →](live/)**
+<iframe id="coopted-demo-frame" src="live/" style="width:100%; height:1900px; border:1px solid var(--border); border-radius:6px; background:var(--bg); margin: 1rem 0; box-shadow: 0 4px 12px rgba(0,0,0,0.12); display:block;" title="Globe vs. AE Disc — live demonstrations" loading="lazy"></iframe>
+
+*If the embed above doesn't render, [open the live demonstrations page directly →](live/).*
 
 The page (current build, v1.4) presents three picker-selectable scenarios. Each track has its own real-flight-time and animates accordingly; the longest flight in the active scenario takes ~18 seconds to complete, faster flights finish proportionally sooner. Floating distance balloons travel with each plane — degrees on the disc side, nautical miles on the globe side.
 

@@ -403,6 +403,21 @@ document.querySelectorAll('nav.tabs button').forEach(b => {
 const initial = (location.hash || '#overview').slice(1);
 if (TAB_ORDER.includes(initial)) showTab(initial);
 else loadTab('overview');
+
+// Auto-resize embedded iframes (e.g. the live demo iframe in the
+// Co-opted Demo tab). Children post { type: 'femr-iframe-height',
+// height: <px> } messages; we find the matching iframe and resize.
+window.addEventListener('message', (e) => {
+  if (!e.data || e.data.type !== 'femr-iframe-height') return;
+  const h = Number(e.data.height);
+  if (!Number.isFinite(h) || h < 100) return;
+  document.querySelectorAll('iframe').forEach(f => {
+    if (f.contentWindow === e.source) {
+      // Add a small buffer so the iframe never shows its own scrollbar.
+      f.style.height = (h + 20) + 'px';
+    }
+  });
+});
 </script>
 </body>
 </html>
