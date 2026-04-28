@@ -1,0 +1,995 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Prototype — Globe vs. Disc · Flat Earth Conceptual Model Review</title>
+<meta name="description" content="Side-by-side three.js globe and AE flat disc renderings of the same flights, both driven by the subject model's own greatCircleArc and canonicalLatLongToDisc functions. Tests the steelman case, the same-time-different-latitude case, and the same-Δlon-different-latitudes killer.">
+<link rel="canonical" href="https://funwithscience.net/flat-earth-model-review/live/prototype-globe-disc.html">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  --bg-page: #fafafa;
+  --bg-stage: #0e121a;
+  --review-bg: #fff;
+  --review-text: #1f2228;
+  --review-muted: #6e6c66;
+  --review-border: #1a1a1a;
+  --review-rule: #ddd;
+
+  --review-accent: #d24a4a;
+  --steelman: #2e7d32;        /* green for steelman */
+  --contradiction: #f57c00;   /* orange for contradiction */
+  --killer: #c62828;          /* deeper red for killer */
+
+  --south: #ff8040;
+  --north: #66c8ff;
+  --equator: #66BB6A;
+  --polar: #ec407a;
+  --hud: #f4eddc;
+
+  --serif: 'Source Serif 4', Georgia, serif;
+  --sans:  'Inter', system-ui, -apple-system, sans-serif;
+  --mono:  'JetBrains Mono', ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg-page: #14151a;
+    --review-bg: #1f2238;
+    --review-text: #e0e0e0;
+    --review-muted: #9a9a9a;
+    --review-border: #d24a4a;
+    --review-rule: #303048;
+  }
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  background: var(--bg-page);
+  color: var(--review-text);
+  font-family: var(--serif);
+  line-height: 1.6;
+}
+.wrap { max-width: 1200px; margin: 0 auto; padding: 1rem 1.5rem 3rem; }
+
+header.site {
+  border-bottom: 1px solid var(--review-rule);
+  padding-bottom: 1rem;
+  margin-bottom: 1.5rem;
+}
+header.site h1 {
+  font-family: var(--serif);
+  font-size: clamp(1.4rem, 3.5vw, 1.85rem);
+  margin: 0 0 .25rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+header.site p { margin: .25rem 0 0; color: var(--review-muted); font-size: .95rem; font-family: var(--sans); }
+header.site a { color: var(--review-accent); text-decoration: none; }
+header.site a:hover { text-decoration: underline; }
+
+.lede {
+  background: var(--review-bg);
+  border-left: 4px solid var(--review-accent);
+  padding: .85rem 1.25rem;
+  border-radius: 0 4px 4px 0;
+  margin-bottom: 1.5rem;
+  font-size: .98rem;
+}
+.lede em { font-style: italic; }
+.lede code { font-family: var(--mono); font-size: .92em; background: rgba(0,0,0,0.06); padding: 0 .3em; border-radius: 2px; }
+@media (prefers-color-scheme: dark) {
+  .lede code { background: rgba(255,255,255,0.08); }
+}
+
+.scenario-picker {
+  display: flex;
+  gap: .5rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+  font-family: var(--sans);
+}
+.scenario-picker button {
+  background: var(--review-bg);
+  color: var(--review-text);
+  border: 2px solid var(--review-rule);
+  border-radius: 6px;
+  padding: .65rem 1rem;
+  font-family: inherit;
+  font-size: .9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color .15s, background .15s;
+  text-align: left;
+  flex: 1 1 0;
+  min-width: 220px;
+}
+.scenario-picker button:hover { border-color: var(--review-accent); }
+.scenario-picker button.active.steelman      { border-color: var(--steelman);      background: rgba(46,125,50,0.08); }
+.scenario-picker button.active.contradiction { border-color: var(--contradiction); background: rgba(245,124,0,0.08); }
+.scenario-picker button.active.killer        { border-color: var(--killer);        background: rgba(198,40,40,0.08); }
+.scenario-picker .pip {
+  display: block;
+  font-size: .68rem;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  margin-bottom: .15rem;
+  color: var(--review-muted);
+}
+.scenario-picker .active.steelman      .pip { color: var(--steelman); }
+.scenario-picker .active.contradiction .pip { color: var(--contradiction); }
+.scenario-picker .active.killer        .pip { color: var(--killer); }
+.scenario-picker .label { font-weight: 600; }
+
+.viewport {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+@media (max-width: 760px) {
+  .viewport { grid-template-columns: 1fr; }
+}
+.view-pane {
+  background: var(--bg-stage);
+  border: 1px solid var(--review-rule);
+  border-radius: 6px;
+  position: relative;
+  overflow: hidden;
+}
+.view-pane .label-tag {
+  position: absolute;
+  top: .5rem;
+  left: .5rem;
+  z-index: 5;
+  font-family: var(--mono);
+  font-size: .68rem;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--hud);
+  background: rgba(14,18,26,0.85);
+  border: 1px solid rgba(255,255,255,0.10);
+  padding: .25rem .55rem;
+  border-radius: 3px;
+}
+.view-pane .source-tag {
+  position: absolute;
+  bottom: .5rem;
+  left: .5rem;
+  z-index: 5;
+  font-family: var(--mono);
+  font-size: .65rem;
+  color: rgba(244,237,220,0.55);
+  background: rgba(14,18,26,0.55);
+  padding: .2rem .45rem;
+  border-radius: 3px;
+}
+
+#globe-canvas {
+  width: 100%;
+  height: 480px;
+  display: block;
+  cursor: grab;
+}
+#globe-canvas:active { cursor: grabbing; }
+
+#disc-svg {
+  width: 100%;
+  height: 480px;
+  display: block;
+}
+
+.controls {
+  background: var(--review-bg);
+  border: 1px solid var(--review-rule);
+  border-radius: 6px;
+  padding: .65rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  font-family: var(--sans);
+  font-size: .88rem;
+  margin-bottom: 1rem;
+}
+.controls button {
+  background: var(--review-accent);
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: .4rem .85rem;
+  font-family: inherit;
+  font-weight: 500;
+  cursor: pointer;
+}
+.controls button.secondary {
+  background: transparent;
+  color: var(--review-text);
+  border: 1px solid var(--review-rule);
+}
+.controls .speed { color: var(--review-muted); }
+.controls .speed input { width: 120px; vertical-align: middle; }
+
+.readout {
+  background: var(--review-bg);
+  border: 1px solid var(--review-rule);
+  border-radius: 6px;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1rem;
+}
+.readout h2 {
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin: 0 0 .5rem;
+  font-family: var(--sans);
+}
+.readout-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0;
+}
+.readout-row {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: .5rem;
+  padding: .35rem 0;
+  border-bottom: 1px dashed var(--review-rule);
+  font-family: var(--sans);
+  font-size: .92rem;
+  align-items: baseline;
+}
+.readout-row:last-child { border-bottom: none; }
+.readout-row .lbl { color: var(--review-muted); font-weight: 500; }
+.readout-row .val { font-family: var(--mono); }
+.readout-row .annot { color: var(--review-muted); font-size: .82rem; font-family: var(--serif); }
+.readout-row .legend-dot {
+  display: inline-block;
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  margin-right: .35rem;
+  vertical-align: 1px;
+}
+.verdict {
+  margin-top: 1rem;
+  padding: .75rem 1rem;
+  border-radius: 4px;
+  font-family: var(--sans);
+  font-weight: 500;
+  font-size: .96rem;
+}
+.verdict.steelman      { background: rgba(46,125,50,0.10);  border-left: 4px solid var(--steelman); }
+.verdict.contradiction { background: rgba(245,124,0,0.10);  border-left: 4px solid var(--contradiction); }
+.verdict.killer        { background: rgba(198,40,40,0.10);  border-left: 4px solid var(--killer); }
+.verdict .pip {
+  display: inline-block;
+  font-size: .7rem;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  padding: .15rem .55rem;
+  border-radius: 3px;
+  margin-right: .5rem;
+  vertical-align: 1px;
+  color: #fff;
+}
+.verdict.steelman .pip      { background: var(--steelman); }
+.verdict.contradiction .pip { background: var(--contradiction); }
+.verdict.killer .pip        { background: var(--killer); }
+
+.scenario-prose {
+  background: var(--review-bg);
+  border: 1px solid var(--review-rule);
+  border-radius: 6px;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.5rem;
+  font-size: .97rem;
+}
+.scenario-prose h3 {
+  margin: 0 0 .5rem;
+  font-family: var(--sans);
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+.scenario-prose code {
+  font-family: var(--mono);
+  background: rgba(0,0,0,0.06);
+  padding: 0 .3em;
+  border-radius: 2px;
+  font-size: .92em;
+}
+@media (prefers-color-scheme: dark) {
+  .scenario-prose code { background: rgba(255,255,255,0.08); }
+}
+
+footer.site-foot {
+  margin-top: 3rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--review-rule);
+  font-size: .85rem;
+  color: var(--review-muted);
+  font-family: var(--sans);
+  text-align: center;
+}
+footer.site-foot a { color: var(--review-muted); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="site">
+  <h1>Prototype — 3D Globe vs. his AE Disc, side by side</h1>
+  <p>← <a href="./">Live demonstrations</a> · <a href="../">Back to the review</a> · same lat/lon waypoints driving both views, computed from the subject model's own <code>greatCircleArc</code> and projected through his own <code>canonicalLatLongToDisc</code></p>
+</header>
+
+<div class="lede">
+  <strong>The setup.</strong> Both views below render the <em>same</em> lat/lon points, generated by the subject model's own <code>greatCircleArc()</code> function from <code>js/data/flightRoutes.js</code>. The left view places those points on a 3D globe (unit sphere). The right view projects the same points through the subject's own <code>canonicalLatLongToDisc()</code> from <code>js/core/canonical.js</code> — the hard-coded north-pole AE projection his simulator uses for every coordinate operation. <em>One input, two visualizations.</em> Any disagreement between them is a property of his projection, not of different math.
+</div>
+
+<div class="scenario-picker" id="scenario-picker"></div>
+
+<div class="viewport">
+  <div class="view-pane">
+    <div class="label-tag">Globe view (3D)</div>
+    <canvas id="globe-canvas"></canvas>
+    <div class="source-tag">unit sphere · same lat/lon waypoints</div>
+  </div>
+  <div class="view-pane">
+    <div class="label-tag">His AE disc (canonical)</div>
+    <svg id="disc-svg" viewBox="0 0 600 480" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet"></svg>
+    <div class="source-tag">canonicalLatLongToDisc · north-pole AE</div>
+  </div>
+</div>
+
+<div class="controls">
+  <button id="play-pause">⏸ Pause</button>
+  <button id="restart" class="secondary">↺ Restart</button>
+  <span class="speed">Speed: <input type="range" id="speed" min="0.25" max="3" step="0.25" value="1"> <span id="speed-val">1.00×</span></span>
+  <span style="margin-left:auto; color: var(--review-muted); font-size: .82rem;">Drag the globe to rotate. Both views animate together.</span>
+</div>
+
+<div class="readout" id="readout">
+  <h2>Numbers (computed live from his own functions)</h2>
+  <div class="readout-grid" id="readout-grid"></div>
+</div>
+
+<div class="scenario-prose" id="scenario-prose"></div>
+
+<footer class="site-foot">
+  <p>← <a href="./">Live demonstrations</a> · <a href="../">Back to the review</a></p>
+</footer>
+
+</div>
+
+<!-- Three.js via importmap, matching the subject's own pattern -->
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.162.0/build/three.module.js"
+  }
+}
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { aeProject, greatCircleArc, centralAngleDeg } from './projection.js';
+
+// ============ Constants ============
+const MI_PER_DEG = 69.0936;        // his constant (Earth circumference / 360)
+const NM_PER_DEG = 60;             // standard
+const TYPICAL_AIRSPEED_MPH = 525;  // long-haul cruise average across our routes
+const ARC_SAMPLES = 192;
+
+// ============ Scenarios ============
+
+const C = {
+  // Real airports
+  syd: { name: 'Sydney',       lat: -33.95003, lon: 151.18169, real: true },
+  scl: { name: 'Santiago',     lat: -33.39710, lon:  -70.79368, real: true },
+  jnb: { name: 'Johannesburg', lat: -26.13939, lon:   28.24679, real: true },
+  per: { name: 'Perth',        lat: -31.93855, lon:  115.96725, real: true },
+  jfk: { name: 'JFK',          lat:  40.6398,  lon:  -73.7789, real: true },
+  tas: { name: 'Tashkent',     lat:  41.3000,  lon:   69.27,   real: true },
+  hel: { name: 'Helsinki',     lat:  60.3172,  lon:   24.9633, real: true },
+  nrt: { name: 'Tokyo (NRT)',  lat:  35.7720,  lon:  140.3929, real: true },
+  sin: { name: 'Singapore',    lat:   1.3644,  lon:  103.9915, real: true },
+  nbo: { name: 'Nairobi',      lat:  -1.3192,  lon:   36.9278, real: true },
+
+  // Synthetic anchors he uses (lat-mirrors, "Persian Gulf")
+  nm_jnb:    { name: '"≈ Egypt" (synthetic)',    lat:  26.13939, lon:  28.24679, real: false, note: 'Lat-mirror of Johannesburg. Lands in southern Egypt.' },
+  nm_syd:    { name: '"≈ Pacific" (synthetic)',  lat:  33.95003, lon: 151.18169, real: false, note: 'Lat-mirror of Sydney. Lands in open Pacific east of Japan.' },
+
+  // Constructed anchors for the killer scenario (same-Δlon at different lats)
+  eq_a:      { name: '0°N, -69°W',  lat:   0,   lon:  -69, real: false, note: 'Equatorial endpoint (Atlantic, off Brazil).' },
+  eq_b:      { name: '0°N,  69°E',  lat:   0,   lon:   69, real: false, note: 'Equatorial endpoint (Indian Ocean, off Maldives).' },
+  pol_a:     { name: '80°N, -69°W', lat:  80,   lon:  -69, real: false, note: 'High-latitude endpoint (Greenland Sea).' },
+  pol_b:     { name: '80°N,  69°E', lat:  80,   lon:   69, real: false, note: 'High-latitude endpoint (Russian Arctic).' },
+  hi_a:      { name: '60°N, -69°W', lat:  60,   lon:  -69, real: false },
+  hi_b:      { name: '60°N,  69°E', lat:  60,   lon:   69, real: false },
+};
+
+const SCENARIOS = [
+  {
+    id: 'steelman',
+    pip: 'Steelman',
+    label: 'Lat-mirror works (his Equal Arc Mirror demo)',
+    pipClass: 'steelman',
+    tracks: [
+      { color: '#ff8040', a: C.jnb, b: C.syd, real: true, name: 'Johannesburg ↔ Sydney',
+        airline: 'Qantas QF63/64', realTimeText: '~14 hours' },
+      { color: '#66c8ff', a: C.nm_jnb, b: C.nm_syd, real: false, name: 'Lat-mirror (synthetic)',
+        airline: '— (no airline; lat-mirror endpoints aren\'t airports)', realTimeText: 'would be ~14 hours by sphere symmetry' },
+    ],
+    verdict: {
+      cls: 'steelman',
+      label: 'No contradiction',
+      text: 'Lat-mirror is a sphere-symmetry result. Both arcs have the same central angle and would have the same flight time at the same airspeed. The disc draws the southern arc longer than the northern, but that is projection distortion — exactly what he labels it. <strong>His Equal Arc Mirror demo is internally consistent. We credit it.</strong>',
+    },
+    prose: `<h3>What you're looking at</h3>
+      <p>His Equal Arc Mirror demo. Johannesburg ↔ Sydney is a real ~14-hour Qantas flight. The "northern mirror" is a synthetic point pair that lat-flips both endpoints — the points land in southern Egypt and the open Pacific, where no airline operates, but the geometry is what matters here. Both pairs share the same central angle (~99°) by sphere symmetry. On the globe, they trace mirror-image arcs of identical length. On his disc, the southern arc draws roughly 2.7× longer in disc-units because the AE projection puts southern latitudes near the disc edge.</p>
+      <p>This case is <em>not</em> a refutation of his model. He is right that equal central angle on a sphere implies equal arc length and (at a fixed airspeed) equal flight time. A flat-earther who sees this case alone walks away thinking the framing works. <strong>It does — for this one case.</strong></p>
+      <p>Switch to the next scenarios to see where the framing breaks.</p>`,
+  },
+  {
+    id: 'tashkent',
+    pip: 'Contradiction',
+    label: 'Same flight time, different latitudes (Tashkent vs SCL↔SYD)',
+    pipClass: 'contradiction',
+    tracks: [
+      { color: '#66c8ff', a: C.jfk, b: C.tas, real: true, name: 'JFK ↔ Tashkent',
+        airline: 'Uzbekistan Airways HY101/102', realTimeText: '~12 hours · twice weekly' },
+      { color: '#ff8040', a: C.scl, b: C.syd, real: true, name: 'Santiago ↔ Sydney',
+        airline: 'Qantas QF27/28', realTimeText: '~12–14 hours · daily (787-9)' },
+    ],
+    verdict: {
+      cls: 'contradiction',
+      label: 'Framing fails',
+      text: 'Both real flights take ~12 hours. JFK ↔ Tashkent covers <strong>143°</strong> of longitude at 41°N; Santiago ↔ Sydney covers <strong>138°</strong> at -34°S. By "degrees are degrees," Tashkent should take <em>longer</em> than Sydney–Santiago because it has more Δlon. It doesn\'t. The cos(lat) compression on longitudes — invisible in his rhetoric, present in his code — is what makes the numbers work.',
+    },
+    prose: `<h3>The first crack</h3>
+      <p>Two real flights, both ~12 hours wall-clock time, both flown daily-or-weekly by major carriers. JFK ↔ Tashkent at 41°N covers <strong>143°</strong> of longitude. Santiago ↔ Sydney at -34°S covers <strong>138°</strong>. By the framing "everything is just degrees," the flight with more degrees should take longer. It doesn't.</p>
+      <p>What's actually happening: a degree of longitude at 41°N is shorter than a degree of longitude at -34°S, because longitudes converge toward the poles. The spherical law of cosines accounts for this; his code does it correctly. But the framing he gives the user — that flight time is determined by central angle, and a degree is a degree — has no slot for "a degree at 41° is smaller than a degree at -34°."</p>
+      <p>Watch the disc view: SCL↔SYD draws a long arc through the southern hemisphere, JFK↔TAS draws a short arc near the disc center. <em>The disc tells you they're different distances.</em> But his Equal Arc framing — equal central angle implies equal time — would make these two flights take different times, because their central angles differ (102° vs 91°). His code correctly returns 102 vs 91. His Equal Arc demos pretend that 102 means ~14 hours and 91 means ~12 hours by some uniform conversion. That implies <strong>airspeed is constant across all flights</strong>. Which is true! And that's what makes the math work — but only because the underlying engine is sphere geometry, not anything about flat earth.</p>`,
+  },
+  {
+    id: 'killer',
+    pip: 'Killer',
+    label: 'Same Δlon at four latitudes (the northern distance problem)',
+    pipClass: 'killer',
+    tracks: [
+      { color: '#ec407a', a: C.pol_a, b: C.pol_b, real: false, name: '138° Δlon at 80°N',
+        airline: '— (no airline; high arctic, no hubs)', realTimeText: '~2.5 hours by sphere; ~17 hours by his framing' },
+      { color: '#66c8ff', a: C.hi_a, b: C.hi_b, real: false, name: '138° Δlon at 60°N',
+        airline: '— (theoretical; some polar transit routes graze it)', realTimeText: '~7.5 hours by sphere; ~17 hours by his framing' },
+      { color: '#ff8040', a: C.scl, b: C.syd, real: true, name: '138° Δlon at -34°S (SCL↔SYD)',
+        airline: 'Qantas QF27/28', realTimeText: '~13 hours actual' },
+      { color: '#66BB6A', a: C.eq_a, b: C.eq_b, real: false, name: '138° Δlon at 0° (equator)',
+        airline: '— (no major equatorial east-west route at this Δlon)', realTimeText: '~17 hours by sphere; ~17 hours by his framing' },
+    ],
+    verdict: {
+      cls: 'killer',
+      label: 'Northern distance problem',
+      text: 'Four flights, all 138° of Δlon, at four different latitudes. Real great-circle distances range from <strong>8,280 nm at the equator</strong> down to <strong>1,116 nm at 80°N</strong>. By his "everything is degrees" framing, all four should take 17 hours. By his own code\'s central-angle math, they range from 17 hours to 2.5 hours. <strong>His disc visually confirms this — the polar arc draws as a tiny ring near the disc center, while the equatorial arc traces the full half of the equator.</strong> His framing has no answer for why the polar arc is short. He has solved the southern distance problem at the cost of creating a northern one.',
+    },
+    prose: `<h3>The northern distance problem</h3>
+      <p>The standard flat-earther struggles with the <em>southern distance problem</em>: AE projection makes the southern hemisphere look enormous on the disc, so the long Sydney ↔ Santiago route should take 2-3× longer than it actually does. His Equal Arc framing tries to escape this by detaching map-distance from real-distance: "equal central angle is what counts, ignore the visual disc length." Clever, and partly successful — but it commits him to the spherical-geometry view of central angle, where 1° of longitude shrinks at higher latitudes by cos(lat).</p>
+      <p>That commitment creates a brand-new problem on the other end of the disc. Look at the four flights above, all spanning 138° of longitude:</p>
+      <ul>
+        <li><strong>Equatorial (0°):</strong> 138° central angle, 8,280 nm, ~17 hours flight at typical cruise — at the equator, "1° = 60 nm" is exactly right.</li>
+        <li><strong>SCL↔SYD (-34°):</strong> 102° central angle, 6,120 nm, ~13 hours actual — already 27% shorter than the equator case.</li>
+        <li><strong>60°N:</strong> 60° central angle, 3,600 nm, ~7.5 hours.</li>
+        <li><strong>80°N:</strong> 18.6° central angle, 1,116 nm, ~2.5 hours.</li>
+      </ul>
+      <p>The disc view <em>shows you this</em> faithfully — the polar arc is a tiny ring near the disc center; the equatorial arc traces the full half of the disc. The disc agrees with the globe. <strong>Both views agree the polar arc is short.</strong></p>
+      <p>What disagrees is his rhetoric. "Equal arc → equal time" applied to "138° of longitude" gives equal time at every latitude — 17 hours for all four. Reality (and his own code) says 2.5h to 17h. The rhetoric demands an answer the disc and the code both refuse to give.</p>
+      <p>This is the cleanest single bust of the framing. The southern distance problem is not solved; it is moved to the north pole, where it grows worse the closer you get.</p>`,
+  },
+];
+
+// ============ Three.js Globe Setup ============
+
+const globeCanvas = document.getElementById('globe-canvas');
+const renderer = new THREE.WebGLRenderer({ canvas: globeCanvas, antialias: true, alpha: true });
+renderer.setPixelRatio(window.devicePixelRatio);
+function resizeRenderer() {
+  const r = globeCanvas.getBoundingClientRect();
+  renderer.setSize(r.width, r.height, false);
+  camera.aspect = r.width / r.height;
+  camera.updateProjectionMatrix();
+}
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 100);
+camera.position.set(0, 0, 3.2);
+const ambient = new THREE.AmbientLight(0xffffff, 0.55);
+scene.add(ambient);
+const sun = new THREE.DirectionalLight(0xffffff, 1.05);
+sun.position.set(2, 1.5, 1.5);
+scene.add(sun);
+
+// Sphere — earthy blue with subtle continent overlay drawn via GeoJSON lines.
+const sphereGeo = new THREE.SphereGeometry(1, 64, 64);
+const sphereMat = new THREE.MeshPhongMaterial({
+  color: 0x1a3960, shininess: 8, specular: 0x222244,
+});
+const sphereMesh = new THREE.Mesh(sphereGeo, sphereMat);
+scene.add(sphereMesh);
+
+// Lat/lon graticule (light wireframe)
+const gratLatGroup = new THREE.Group();
+for (let lat = -60; lat <= 60; lat += 30) {
+  const pts = [];
+  for (let lon = 0; lon <= 360; lon += 4) pts.push(latLonToVec3(lat, lon, 1.001));
+  const geo = new THREE.BufferGeometry().setFromPoints(pts);
+  const mat = new THREE.LineBasicMaterial({ color: 0x4a6685, transparent: true, opacity: 0.35 });
+  gratLatGroup.add(new THREE.Line(geo, mat));
+}
+// Equator highlighted
+{
+  const pts = [];
+  for (let lon = 0; lon <= 360; lon += 2) pts.push(latLonToVec3(0, lon, 1.002));
+  const geo = new THREE.BufferGeometry().setFromPoints(pts);
+  const mat = new THREE.LineBasicMaterial({ color: 0x66BB6A, transparent: true, opacity: 0.85 });
+  gratLatGroup.add(new THREE.Line(geo, mat));
+}
+scene.add(gratLatGroup);
+
+const gratLonGroup = new THREE.Group();
+for (let lon = 0; lon < 360; lon += 30) {
+  const pts = [];
+  for (let lat = -89; lat <= 89; lat += 4) pts.push(latLonToVec3(lat, lon, 1.001));
+  const geo = new THREE.BufferGeometry().setFromPoints(pts);
+  const mat = new THREE.LineBasicMaterial({ color: 0x4a6685, transparent: true, opacity: 0.30 });
+  gratLonGroup.add(new THREE.Line(geo, mat));
+}
+scene.add(gratLonGroup);
+
+// Country outlines from world-atlas (loaded via fetch, cached)
+const continentsGroup = new THREE.Group();
+scene.add(continentsGroup);
+
+async function loadContinents() {
+  try {
+    const r = await fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/land-110m.json');
+    if (!r.ok) throw new Error('fetch failed');
+    const topo = await r.json();
+    // We need a lightweight topojson decoder. Use d3-geo's decoded form:
+    // world-atlas land-110m exposes "land" as a GeometryCollection with arcs.
+    // Decoder inline below to avoid a dependency.
+    const land = decodeTopojson(topo, 'land');
+    drawGeoJsonOnSphere(land, continentsGroup, 0xa0c4e8, 0.55);
+  } catch (e) {
+    console.warn('continents load skipped:', e.message);
+  }
+}
+loadContinents();
+
+// Tiny topojson decoder (only the bits we need)
+function decodeTopojson(topology, key) {
+  const obj = topology.objects[key];
+  const transform = topology.transform;
+  function decode(arc) {
+    const out = [];
+    let x = 0, y = 0;
+    for (const [dx, dy] of arc) {
+      x += dx; y += dy;
+      out.push([
+        x * transform.scale[0] + transform.translate[0],
+        y * transform.scale[1] + transform.translate[1],
+      ]);
+    }
+    return out;
+  }
+  function getArc(i) {
+    return i < 0 ? decode(topology.arcs[~i]).reverse() : decode(topology.arcs[i]);
+  }
+  function getPolygon(arcs) { return arcs.map(ring => ring.flatMap((i, j) => {
+    const a = getArc(i);
+    return j === 0 ? a : a.slice(1);
+  })); }
+  function decodeGeom(g) {
+    if (g.type === 'GeometryCollection') return { type: 'GeometryCollection', geometries: g.geometries.map(decodeGeom) };
+    if (g.type === 'MultiPolygon') return { type: 'MultiPolygon', coordinates: g.arcs.map(getPolygon) };
+    if (g.type === 'Polygon') return { type: 'Polygon', coordinates: getPolygon(g.arcs) };
+    return g;
+  }
+  return decodeGeom(obj);
+}
+
+function drawGeoJsonOnSphere(geom, group, color, opacity) {
+  const mat = new THREE.LineBasicMaterial({ color, transparent: true, opacity });
+  function visit(g) {
+    if (g.type === 'GeometryCollection') return g.geometries.forEach(visit);
+    if (g.type === 'Polygon')      return drawRings(g.coordinates);
+    if (g.type === 'MultiPolygon') return g.coordinates.forEach(drawRings);
+  }
+  function drawRings(rings) {
+    for (const ring of rings) {
+      const pts = ring.map(([lon, lat]) => latLonToVec3(lat, lon, 1.0015));
+      const geo = new THREE.BufferGeometry().setFromPoints(pts);
+      group.add(new THREE.Line(geo, mat));
+    }
+  }
+  visit(geom);
+}
+
+function latLonToVec3(latDeg, lonDeg, r = 1) {
+  const phi   = (90 - latDeg) * Math.PI / 180;
+  const theta = (lonDeg + 180) * Math.PI / 180;
+  return new THREE.Vector3(
+    -r * Math.sin(phi) * Math.cos(theta),
+     r * Math.cos(phi),
+     r * Math.sin(phi) * Math.sin(theta),
+  );
+}
+
+// Drag-to-rotate
+let isDragging = false, lastX = 0, lastY = 0;
+let rotY = 0.4, rotX = 0.2;
+globeCanvas.addEventListener('pointerdown', (e) => { isDragging = true; lastX = e.clientX; lastY = e.clientY; });
+globeCanvas.addEventListener('pointermove', (e) => {
+  if (!isDragging) return;
+  const dx = e.clientX - lastX, dy = e.clientY - lastY;
+  rotY += dx * 0.005;
+  rotX += dy * 0.005;
+  rotX = Math.max(-1.4, Math.min(1.4, rotX));
+  lastX = e.clientX; lastY = e.clientY;
+});
+window.addEventListener('pointerup', () => { isDragging = false; });
+globeCanvas.addEventListener('pointercancel', () => { isDragging = false; });
+
+// Containers for per-scenario arcs/planes
+const arcsGroup = new THREE.Group();
+const planesGroup = new THREE.Group();
+const endpointsGroup = new THREE.Group();
+scene.add(arcsGroup, planesGroup, endpointsGroup);
+
+function clearGroup(g) {
+  while (g.children.length) {
+    const c = g.children.pop();
+    c.geometry?.dispose();
+    if (Array.isArray(c.material)) c.material.forEach(m => m.dispose());
+    else c.material?.dispose();
+  }
+}
+
+// ============ Disc Setup ============
+
+const discSvg = document.getElementById('disc-svg');
+const DISC_W = 600, DISC_H = 480;
+const DISC_CX = DISC_W * 0.5, DISC_CY = DISC_H * 0.5;
+const DISC_R = Math.min(DISC_W, DISC_H) * 0.46;
+
+function buildDiscChrome() {
+  const ns = 'http://www.w3.org/2000/svg';
+  const frag = document.createDocumentFragment();
+  // Outer disc + tropics
+  const outline = document.createElementNS(ns, 'circle');
+  outline.setAttribute('cx', DISC_CX); outline.setAttribute('cy', DISC_CY);
+  outline.setAttribute('r', DISC_R);
+  outline.setAttribute('fill', 'rgba(26,57,96,0.28)');
+  outline.setAttribute('stroke', 'rgba(255,255,255,0.18)');
+  outline.setAttribute('stroke-width', '1');
+  frag.appendChild(outline);
+  // Equator (r = 0.5)
+  const eq = document.createElementNS(ns, 'circle');
+  eq.setAttribute('cx', DISC_CX); eq.setAttribute('cy', DISC_CY);
+  eq.setAttribute('r', DISC_R * 0.5);
+  eq.setAttribute('fill', 'none');
+  eq.setAttribute('stroke', '#66BB6A');
+  eq.setAttribute('stroke-width', '0.8');
+  eq.setAttribute('stroke-dasharray', '4 3');
+  eq.setAttribute('opacity', '0.7');
+  frag.appendChild(eq);
+  // Tropics (r = 0.37 / 0.63)
+  for (const [r, opacity] of [[0.37, 0.5], [0.63, 0.5]]) {
+    const c = document.createElementNS(ns, 'circle');
+    c.setAttribute('cx', DISC_CX); c.setAttribute('cy', DISC_CY);
+    c.setAttribute('r', DISC_R * r);
+    c.setAttribute('fill', 'none');
+    c.setAttribute('stroke', 'rgba(255,255,255,0.10)');
+    c.setAttribute('stroke-width', '0.5');
+    c.setAttribute('stroke-dasharray', '3 4');
+    frag.appendChild(c);
+  }
+  // Meridians
+  for (let lon = 0; lon < 360; lon += 30) {
+    const a = lon * Math.PI / 180;
+    const x2 = DISC_CX + Math.cos(a) * DISC_R;
+    const y2 = DISC_CY - Math.sin(a) * DISC_R;
+    const ln = document.createElementNS(ns, 'line');
+    ln.setAttribute('x1', DISC_CX); ln.setAttribute('y1', DISC_CY);
+    ln.setAttribute('x2', x2);      ln.setAttribute('y2', y2);
+    ln.setAttribute('stroke', 'rgba(255,255,255,0.05)');
+    ln.setAttribute('stroke-width', '0.5');
+    frag.appendChild(ln);
+  }
+  // North pole marker
+  const pole = document.createElementNS(ns, 'circle');
+  pole.setAttribute('cx', DISC_CX); pole.setAttribute('cy', DISC_CY);
+  pole.setAttribute('r', '3');
+  pole.setAttribute('fill', 'rgba(255,255,255,0.5)');
+  frag.appendChild(pole);
+  const poleLbl = document.createElementNS(ns, 'text');
+  poleLbl.setAttribute('x', DISC_CX + 6); poleLbl.setAttribute('y', DISC_CY - 6);
+  poleLbl.setAttribute('font-family', 'JetBrains Mono');
+  poleLbl.setAttribute('font-size', '9');
+  poleLbl.setAttribute('fill', 'rgba(244,237,220,0.7)');
+  poleLbl.textContent = 'N pole';
+  frag.appendChild(poleLbl);
+  discSvg.appendChild(frag);
+}
+buildDiscChrome();
+
+const discArcsGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+const discPlanesGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+const discEndpointsGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+discSvg.appendChild(discArcsGroup);
+discSvg.appendChild(discPlanesGroup);
+discSvg.appendChild(discEndpointsGroup);
+
+function clearSvgGroup(g) { while (g.firstChild) g.removeChild(g.firstChild); }
+
+// ============ Scenario rendering ============
+
+let activeScenarioId = SCENARIOS[0].id;
+let scenarioData = null;
+
+function buildScenarioPicker() {
+  const root = document.getElementById('scenario-picker');
+  root.innerHTML = SCENARIOS.map(s => `
+    <button data-sid="${s.id}" class="${s.pipClass} ${s.id === activeScenarioId ? 'active' : ''}">
+      <span class="pip">${s.pip}</span>
+      <span class="label">${s.label}</span>
+    </button>`).join('');
+  root.querySelectorAll('button[data-sid]').forEach(b => {
+    b.addEventListener('click', () => { activateScenario(b.dataset.sid); });
+  });
+}
+
+function activateScenario(id) {
+  activeScenarioId = id;
+  document.querySelectorAll('.scenario-picker button').forEach(b => {
+    b.classList.toggle('active', b.dataset.sid === id);
+  });
+  const s = SCENARIOS.find(x => x.id === id);
+  scenarioData = buildTracks(s);
+  renderArcs();
+  renderReadout(s);
+  renderProse(s);
+  progress = 0;  // restart animation
+}
+
+function buildTracks(scenario) {
+  return scenario.tracks.map(t => {
+    const arcLatLon = greatCircleArc(t.a.lat, t.a.lon, t.b.lat, t.b.lon, ARC_SAMPLES);
+    const central  = centralAngleDeg(t.a.lat, t.a.lon, t.b.lat, t.b.lon);
+    const dlatAbs  = Math.abs(t.b.lat - t.a.lat);
+    let dlon = t.b.lon - t.a.lon;
+    while (dlon > 180)  dlon -= 360;
+    while (dlon < -180) dlon += 360;
+    const dlonAbs = Math.abs(dlon);
+
+    // Build geometries
+    const arc3D = arcLatLon.map(([la, lo]) => latLonToVec3(la, lo, 1.005));
+    const arc2D = arcLatLon.map(([la, lo]) => {
+      const [x, y] = aeProject(la, lo, 1);
+      return [DISC_CX + x * DISC_R, DISC_CY - y * DISC_R];
+    });
+
+    return { ...t, arcLatLon, arc3D, arc2D, centralAngleDeg: central, dlatAbs, dlonAbs };
+  });
+}
+
+function renderArcs() {
+  // Clear
+  clearGroup(arcsGroup);
+  clearGroup(planesGroup);
+  clearGroup(endpointsGroup);
+  clearSvgGroup(discArcsGroup);
+  clearSvgGroup(discPlanesGroup);
+  clearSvgGroup(discEndpointsGroup);
+
+  for (const t of scenarioData) {
+    // ----- 3D globe arc -----
+    const arcGeo = new THREE.BufferGeometry().setFromPoints(t.arc3D);
+    const arcMat = new THREE.LineBasicMaterial({ color: t.color, linewidth: 2 });
+    arcsGroup.add(new THREE.Line(arcGeo, arcMat));
+    // Endpoints
+    for (const pt of [t.arcLatLon[0], t.arcLatLon[t.arcLatLon.length - 1]]) {
+      const dot = new THREE.Mesh(
+        new THREE.SphereGeometry(0.018, 12, 12),
+        new THREE.MeshBasicMaterial({ color: t.color }),
+      );
+      dot.position.copy(latLonToVec3(pt[0], pt[1], 1.012));
+      endpointsGroup.add(dot);
+    }
+    // Plane silhouette (small sphere — proxy)
+    const plane = new THREE.Mesh(
+      new THREE.SphereGeometry(0.025, 12, 12),
+      new THREE.MeshBasicMaterial({ color: 0xffffff }),
+    );
+    plane.userData.color = t.color;
+    plane.userData.arc = t.arc3D;
+    planesGroup.add(plane);
+
+    // ----- Disc arc -----
+    const ns = 'http://www.w3.org/2000/svg';
+    const path = document.createElementNS(ns, 'path');
+    let d = '';
+    for (let i = 0; i < t.arc2D.length; i++) {
+      const [x, y] = t.arc2D[i];
+      d += (i === 0 ? 'M' : 'L') + x.toFixed(2) + ',' + y.toFixed(2);
+    }
+    path.setAttribute('d', d);
+    path.setAttribute('fill', 'none');
+    path.setAttribute('stroke', t.color);
+    path.setAttribute('stroke-width', '2.2');
+    discArcsGroup.appendChild(path);
+    // Endpoints
+    for (const i of [0, t.arc2D.length - 1]) {
+      const dot = document.createElementNS(ns, 'circle');
+      dot.setAttribute('cx', t.arc2D[i][0]); dot.setAttribute('cy', t.arc2D[i][1]);
+      dot.setAttribute('r', '4');
+      dot.setAttribute('fill', t.color);
+      discEndpointsGroup.appendChild(dot);
+    }
+    // Plane (a circle, gets repositioned each frame)
+    const dplane = document.createElementNS(ns, 'circle');
+    dplane.setAttribute('r', '5');
+    dplane.setAttribute('fill', '#fff');
+    dplane.setAttribute('stroke', t.color);
+    dplane.setAttribute('stroke-width', '2');
+    dplane.dataset.arcLen = t.arc2D.length;
+    discPlanesGroup.appendChild(dplane);
+  }
+}
+
+function renderReadout(scenario) {
+  const root = document.getElementById('readout-grid');
+  // Build per-track stat lines
+  const statRows = scenarioData.map((t, i) => {
+    const central = t.centralAngleDeg;
+    const realNm  = central * NM_PER_DEG;
+    const realMi  = central * MI_PER_DEG;
+    const fegridNm = t.dlonAbs * NM_PER_DEG;
+    const fegridErrPct = ((fegridNm - realNm) / realNm) * 100;
+    const realHours = realNm / (TYPICAL_AIRSPEED_MPH * 0.868976);  // mph → kts
+    return `
+      <div class="readout-row" style="grid-template-columns: 1fr; padding-top:.65rem; padding-bottom: 0; border-bottom:none;">
+        <div>
+          <span class="legend-dot" style="background:${t.color}"></span>
+          <strong>${t.name}</strong>
+          ${t.real
+            ? `<span style="font-family:var(--mono);font-size:.78rem;color:var(--review-muted);"> · ${t.airline}</span>`
+            : `<span style="font-family:var(--mono);font-size:.78rem;color:var(--review-muted);"> · ${t.airline}</span>`}
+        </div>
+      </div>
+      <div class="readout-row">
+        <span class="lbl">Δlat / Δlon</span>
+        <span class="val">${t.dlatAbs.toFixed(2)}° / ${t.dlonAbs.toFixed(2)}°</span>
+      </div>
+      <div class="readout-row">
+        <span class="lbl">Central angle (his code)</span>
+        <span class="val">${central.toFixed(2)}°</span>
+      </div>
+      <div class="readout-row">
+        <span class="lbl">Real great-circle distance</span>
+        <span class="val">${realNm.toFixed(0)} nm · ${realMi.toFixed(0)} mi</span>
+        <span class="annot" style="grid-column: 1 / -1; padding-top:.1rem; padding-left: 220px;">central angle × 60 nm/° (or × 69.0936 mi/°)</span>
+      </div>
+      <div class="readout-row">
+        <span class="lbl">"Degrees are degrees" prediction</span>
+        <span class="val">${fegridNm.toFixed(0)} nm <span style="color:${Math.abs(fegridErrPct) > 5 ? 'var(--killer)' : 'inherit'}">(${fegridErrPct >= 0 ? '+' : ''}${fegridErrPct.toFixed(1)}%)</span></span>
+        <span class="annot" style="grid-column: 1 / -1; padding-top:.1rem; padding-left: 220px;">Δlon × 60 nm/° — the "linear Gleason" reading; error vs sphere</span>
+      </div>
+      <div class="readout-row">
+        <span class="lbl">Estimated flight time at 525 mph</span>
+        <span class="val">${formatHM(realHours)}</span>
+      </div>
+      <div class="readout-row">
+        <span class="lbl">Real airline operations</span>
+        <span class="val" style="font-family: var(--serif); font-style: italic;">${t.realTimeText}</span>
+      </div>
+    `;
+  }).join('');
+  // Verdict
+  const v = scenario.verdict;
+  root.innerHTML = statRows + `
+    <div class="verdict ${v.cls}" style="margin-top: 1rem;">
+      <span class="pip">${v.label}</span>
+      ${v.text}
+    </div>
+  `;
+}
+
+function renderProse(scenario) {
+  document.getElementById('scenario-prose').innerHTML = scenario.prose;
+}
+
+function formatHM(hours) {
+  if (!isFinite(hours)) return '—';
+  const h = Math.floor(hours);
+  const m = Math.round((hours - h) * 60);
+  return `${h}h ${String(m).padStart(2,'0')}m`;
+}
+
+// ============ Animation loop ============
+
+let progress = 0;
+let playing = true;
+let speedMul = 1;
+const LOOP_MS = 14000;  // 14 s loop ≈ "14 hours" notional
+
+let last = performance.now();
+function tick(now) {
+  const dt = (now - last) * speedMul;
+  last = now;
+
+  // Globe rotation from drag
+  sphereMesh.rotation.y = rotY;
+  sphereMesh.rotation.x = rotX;
+  gratLatGroup.rotation.y = rotY;  gratLatGroup.rotation.x = rotX;
+  gratLonGroup.rotation.y = rotY;  gratLonGroup.rotation.x = rotX;
+  continentsGroup.rotation.y = rotY; continentsGroup.rotation.x = rotX;
+  arcsGroup.rotation.y = rotY;     arcsGroup.rotation.x = rotX;
+  endpointsGroup.rotation.y = rotY; endpointsGroup.rotation.x = rotX;
+  planesGroup.rotation.y = rotY;   planesGroup.rotation.x = rotX;
+
+  if (playing) progress = (progress + dt / LOOP_MS) % 1;
+
+  // Update plane positions on globe
+  planesGroup.children.forEach((p, idx) => {
+    const arc = p.userData.arc;
+    if (!arc?.length) return;
+    const i = Math.min(arc.length - 1, Math.floor(progress * (arc.length - 1)));
+    const i1 = Math.min(arc.length - 1, i + 1);
+    const f = progress * (arc.length - 1) - i;
+    const v = arc[i].clone().lerp(arc[i1], f);
+    v.normalize().multiplyScalar(1.025);
+    p.position.copy(v);
+  });
+
+  // Update plane positions on disc
+  Array.from(discPlanesGroup.children).forEach((dp, idx) => {
+    const t = scenarioData[idx];
+    if (!t) return;
+    const arc = t.arc2D;
+    const i = Math.min(arc.length - 1, Math.floor(progress * (arc.length - 1)));
+    const i1 = Math.min(arc.length - 1, i + 1);
+    const f = progress * (arc.length - 1) - i;
+    const x = arc[i][0] + (arc[i1][0] - arc[i][0]) * f;
+    const y = arc[i][1] + (arc[i1][1] - arc[i][1]) * f;
+    dp.setAttribute('cx', x.toFixed(2));
+    dp.setAttribute('cy', y.toFixed(2));
+  });
+
+  resizeRenderer();
+  renderer.render(scene, camera);
+  requestAnimationFrame(tick);
+}
+requestAnimationFrame((t) => { last = t; tick(t); });
+
+// Controls
+document.getElementById('play-pause').addEventListener('click', (e) => {
+  playing = !playing;
+  e.target.textContent = playing ? '⏸ Pause' : '▶ Play';
+});
+document.getElementById('restart').addEventListener('click', () => { progress = 0; });
+const speedEl = document.getElementById('speed');
+const speedVal = document.getElementById('speed-val');
+speedEl.addEventListener('input', () => {
+  speedMul = parseFloat(speedEl.value);
+  speedVal.textContent = speedMul.toFixed(2) + '×';
+});
+
+// Init
+buildScenarioPicker();
+activateScenario('steelman');
+window.addEventListener('resize', resizeRenderer);
+</script>
+</body>
+</html>
