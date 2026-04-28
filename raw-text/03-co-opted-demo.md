@@ -1,18 +1,30 @@
 # Co-opted Demo
 
-A live page that reproduces several of the subject model's demos using his own functions and bundled data, with the exposing instrumentation built in. Each section computes its numbers in real time from his source — no paraphrasing, no estimates.
+A live page that reproduces the spatial commitments of the subject model's flight-routes demo, side-by-side with a 3D globe rendering of the same lat/lon waypoints. Both views are driven by the subject's own `greatCircleArc()` function — the disc projects through his `canonicalLatLongToDisc()`, the globe places the same lat/lon points on a unit sphere. **One input, two visualizations.** Any disagreement between them is a property of his projection, not of different math.
 
 **[Open the live demonstrations page →](live/)**
 
-The page (v1) carries three demonstrations:
+The page (current build, v1.4) presents three picker-selectable scenarios. Each track has its own real-flight-time and animates accordingly; the longest flight in the active scenario takes ~18 seconds to complete, faster flights finish proportionally sooner. Floating distance balloons travel with each plane — degrees on the disc side, nautical miles on the globe side.
 
-1. **Equal Arc, Unequal Disc** — renders his "Equal Arc Flight (N/S)" pairs on his canonical AE projection and measures the actual disc-cartesian path length each arc gets drawn with. For Johannesburg ↔ Sydney vs its lat-mirrored northern partner the ratio is **2.70×**; for Santiago ↔ Sydney vs his JFK ↔ "Persian Gulf" same-central-angle pair it is **3.30×**. His demos drive both legs with a single normalized progress tween so they finish at the same wall-clock time, and label the result *"Equal arc → equal time, regardless of projection distortion."* If the disc is the territory, the southern plane has to fly 2.7–3.3× faster than the northern one to match.
-2. **QF27/QF28 in mph** — reads the four bundled flight-track summaries from his `flightTracks.js` and shows the "deg/h" units his demo displays alongside the mph values they were computed from. Per-flight conversion through his hard-coded `MI_PER_DEG = 69.0936` constant from `js/demos/flightRoutes.js:46`. The mph numbers are the ones his model has but is configured not to display.
-3. **One Geometry, Twenty Skins** — renders Santiago ↔ Sydney through four different projection skins from his `js/core/projections.js` registry (AE, Mercator, AE-Dual, Lambert AEA polar). The `(lat, lon)` coordinates feeding every dot are identical in all four panels, because per `canonical.js` his coordinate framework is hard-coded north-pole AE regardless of which "FE Map" the user has selected.
+1. **Steelman — Lat-mirror works.** The subject's Equal Arc Mirror demo. JNB↔Sydney is real; the lat-mirror endpoints are synthetic. By sphere symmetry the central angle is identical and a real-world flight at the mirrored latitudes would take the same wall-clock time. The disc draws the southern arc longer than the northern (projection distortion — exactly what he labels it), but the globe shows them as identical mirror-image arcs. **No contradiction. We credit it.**
+2. **Contradiction — Same flight time, different latitudes.** JFK↔Tashkent (Uzbekistan Airways HY101, ~12h, 143° Δlon at 41°N) vs Santiago↔Sydney (Qantas QF27/28, ~12-14h, 138° Δlon at -34°S). Both real, both ~12 hours. By "everything is degrees," Tashkent should take longer because it has more Δlon. It doesn't. The cos(lat) compression on longitudes — invisible in his rhetoric, present in his code — is what makes the numbers work.
+3. **Killer — 138° of Δlon at four latitudes.** A theoretical comparison (only one of the four legs is a real flight, the others are mathematical anchors that isolate the cos(lat) effect). Real great-circle distances range from 8,280 nm at the equator down to 1,116 nm at 80°N. By his "everything is degrees" framing, all four should take ~17 hours. By his own code, they range from ~17h (equator) to ~2.5h (80°N). The disc and the globe both visually confirm this — the polar arc draws as a tiny ring near the disc center, while the equatorial arc traces nearly half the sphere. **He has solved the southern distance problem at the cost of creating a northern one.**
+
+The numerical readout below the side-by-side views shows for each track: Δlat / Δlon, his code's central angle, the real great-circle distance (central angle × 60 nm/° or 69.0936 mi/°), the "degrees are degrees" prediction (Δlon × 60 nm) with percent error, the estimated flight time at typical cruise speed, and the actual airline operations citation. Each track carries a green `real flight` or orange `synthetic` badge so the data provenance is unambiguous.
+
+## Architecture
+
+Globe rendering: Three.js loaded via the same `importmap` pattern the subject uses (`https://unpkg.com/three@0.162.0/build/three.module.js`). Country outlines from `world-atlas/land-110m.json` decoded inline. Drag-to-rotate; both views animate together.
+
+Disc rendering: SVG, projecting lat/lon points through `aeProject()` (a direct port of his `canonicalLatLongToDisc` from `js/core/canonical.js`).
+
+Flight data: hand-extracted summary statistics for QF27/28 from his bundled `js/data/flightTracks.js` plus city coordinates from `js/data/flightRoutes.js`. All real flights cite their operator and flight number.
+
+Earlier focused demonstrations are still available at [live/three-mini-demos.html](live/three-mini-demos.html) — equal-arc disc-length ratios, QF27/28 in mph (showing his deg/h units are mph divided by Earth circumference), and one-geometry-twenty-skins. The original SVG-recreation overlay prototype is at [live/prototype-equal-arc.html](live/prototype-equal-arc.html).
 
 ## Coming next
 
-The page also enumerates demonstrations planned for v2: a side-by-side sun-altitude readout (interpolated `headroom = 0.12` value vs spherical RA/Dec → Az/El identity), a multi-pipeline ephemeris query that surfaces the silent `DE405 → GeoC → VSOP87 → Ptolemy` fallback, and an annotated source viewer pinned to the upstream commit hash so finding-citations can detect drift.
+Demonstrations planned for v2: a side-by-side sun-altitude readout (interpolated `headroom = 0.12` value vs spherical RA/Dec → Az/El identity), a multi-pipeline ephemeris query that surfaces the silent `DE405 → GeoC → VSOP87 → Ptolemy` fallback, and an annotated source viewer pinned to the upstream commit hash so finding-citations can detect drift.
 
 ## Why this approach
 
