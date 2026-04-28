@@ -184,6 +184,52 @@ header.site a:hover { text-decoration: underline; }
   display: block;
 }
 
+/* Floating balloon labels that travel with each plane. */
+.globe-label-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+.globe-label {
+  position: absolute;
+  background: rgba(255,255,255,0.94);
+  color: #1a1a1a;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  padding: 2px 6px;
+  border-radius: 3px;
+  border: 1.5px solid;
+  white-space: nowrap;
+  transform: translate(-50%, calc(-100% - 10px));
+  transition: opacity .15s;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.35);
+  z-index: 4;
+}
+.globe-label::after {
+  /* downward-pointing tail */
+  content: '';
+  position: absolute;
+  left: 50%; bottom: -6px;
+  width: 0; height: 0;
+  border: 5px solid transparent;
+  border-top-color: rgba(255,255,255,0.94);
+  transform: translateX(-50%);
+}
+.globe-label.behind { opacity: 0.25; }
+.globe-label .label-name { font-weight: 600; margin-right: 6px; }
+.globe-label .label-num  { font-variant-numeric: tabular-nums; }
+
+.disc-balloon-bg { fill: rgba(255,255,255,0.94); stroke-width: 1.5; }
+.disc-balloon-text {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10.5px;
+  font-weight: 500;
+  fill: #1a1a1a;
+}
+.disc-balloon-text.label-name { font-weight: 600; }
+
 .controls {
   background: var(--review-bg);
   border: 1px solid var(--review-rule);
@@ -336,6 +382,7 @@ footer.site-foot a { color: var(--review-muted); }
   <div class="view-pane">
     <div class="label-tag">Globe view (3D)</div>
     <canvas id="globe-canvas"></canvas>
+    <div class="globe-label-overlay" id="globe-label-overlay"></div>
     <div class="source-tag">unit sphere · same lat/lon waypoints</div>
   </div>
   <div class="view-pane">
@@ -420,9 +467,9 @@ const SCENARIOS = [
     pipClass: 'steelman',
     tracks: [
       { color: '#ff8040', a: C.jnb, b: C.syd, real: true, name: 'Johannesburg ↔ Sydney',
-        airline: 'Qantas QF63/64', realTimeText: '~14 hours' },
+        airline: 'Qantas QF63/64', realTimeText: '~14 hours', realFlightHours: 14 },
       { color: '#66c8ff', a: C.nm_jnb, b: C.nm_syd, real: false, name: 'Lat-mirror (synthetic)',
-        airline: '— (no airline; lat-mirror endpoints aren\'t airports)', realTimeText: 'would be ~14 hours by sphere symmetry' },
+        airline: '— (no airline; lat-mirror endpoints aren\'t airports)', realTimeText: 'would be ~14 hours by sphere symmetry', realFlightHours: 14 },
     ],
     verdict: {
       cls: 'steelman',
@@ -441,9 +488,9 @@ const SCENARIOS = [
     pipClass: 'contradiction',
     tracks: [
       { color: '#66c8ff', a: C.jfk, b: C.tas, real: true, name: 'JFK ↔ Tashkent',
-        airline: 'Uzbekistan Airways HY101/102', realTimeText: '~12 hours · twice weekly' },
+        airline: 'Uzbekistan Airways HY101/102', realTimeText: '~12 hours · twice weekly', realFlightHours: 12 },
       { color: '#ff8040', a: C.scl, b: C.syd, real: true, name: 'Santiago ↔ Sydney',
-        airline: 'Qantas QF27/28', realTimeText: '~12–14 hours · daily (787-9)' },
+        airline: 'Qantas QF27/28', realTimeText: '~12–14 hours · daily (787-9)', realFlightHours: 13 },
     ],
     verdict: {
       cls: 'contradiction',
@@ -462,13 +509,13 @@ const SCENARIOS = [
     pipClass: 'killer',
     tracks: [
       { color: '#ec407a', a: C.pol_a, b: C.pol_b, real: false, name: '138° Δlon at 80°N',
-        airline: '— (no airline; high arctic, no hubs)', realTimeText: '~2.5 hours by sphere; ~17 hours by his framing' },
+        airline: '— synthetic (no airports near 80°N)', realTimeText: '~2.5h by sphere · ~17h by "degrees" framing', realFlightHours: 2.5 },
       { color: '#66c8ff', a: C.hi_a, b: C.hi_b, real: false, name: '138° Δlon at 60°N',
-        airline: '— (theoretical; some polar transit routes graze it)', realTimeText: '~7.5 hours by sphere; ~17 hours by his framing' },
+        airline: '— synthetic (closest real: HEL↔HND polar route at lower Δlon)', realTimeText: '~7.5h by sphere · ~17h by "degrees" framing', realFlightHours: 7.5 },
       { color: '#ff8040', a: C.scl, b: C.syd, real: true, name: '138° Δlon at -34°S (SCL↔SYD)',
-        airline: 'Qantas QF27/28', realTimeText: '~13 hours actual' },
+        airline: 'Qantas QF27/28 · the only real flight in this scenario', realTimeText: '~13 hours actual', realFlightHours: 13 },
       { color: '#66BB6A', a: C.eq_a, b: C.eq_b, real: false, name: '138° Δlon at 0° (equator)',
-        airline: '— (no major equatorial east-west route at this Δlon)', realTimeText: '~17 hours by sphere; ~17 hours by his framing' },
+        airline: '— synthetic (no major real equatorial east-west at 138° Δlon)', realTimeText: '~17h by sphere · ~17h by "degrees" framing', realFlightHours: 17 },
     ],
     verdict: {
       cls: 'killer',
@@ -760,7 +807,7 @@ function activateScenario(id) {
   renderArcs();
   renderReadout(s);
   renderProse(s);
-  progress = 0;  // restart animation
+  resetProgresses();
 }
 
 function buildTracks(scenario) {
@@ -780,18 +827,42 @@ function buildTracks(scenario) {
       return [DISC_CX + x * DISC_R, DISC_CY - y * DISC_R];
     });
 
-    return { ...t, arcLatLon, arc3D, arc2D, centralAngleDeg: central, dlatAbs, dlonAbs };
+    // Real-world distance derived from his code's central angle.
+    const totalNm = central * NM_PER_DEG;
+    const totalMi = central * MI_PER_DEG;
+
+    // Animation rate. realFlightHours from scenario data; fall back to
+    // total distance / typical airspeed if not provided.
+    const flightHours = t.realFlightHours
+      ?? (totalMi / TYPICAL_AIRSPEED_MPH);
+
+    return {
+      ...t,
+      arcLatLon, arc3D, arc2D,
+      centralAngleDeg: central,
+      dlatAbs, dlonAbs,
+      totalNm, totalMi,
+      flightHours,
+    };
   });
 }
 
+// Globe HTML labels container — recreated per scenario.
+const globeLabelOverlay = document.getElementById('globe-label-overlay');
+const globeLabelEls = [];
+
 function renderArcs() {
-  // Clear
+  // Clear three.js groups
   clearGroup(arcsGroup);
   clearGroup(planesGroup);
   clearGroup(endpointsGroup);
+  // Clear SVG groups
   clearSvgGroup(discArcsGroup);
   clearSvgGroup(discPlanesGroup);
   clearSvgGroup(discEndpointsGroup);
+  // Clear globe HTML labels
+  while (globeLabelOverlay.firstChild) globeLabelOverlay.removeChild(globeLabelOverlay.firstChild);
+  globeLabelEls.length = 0;
 
   for (const t of scenarioData) {
     // ----- 3D globe arc -----
@@ -807,7 +878,7 @@ function renderArcs() {
       dot.position.copy(latLonToVec3(pt[0], pt[1], 1.012));
       endpointsGroup.add(dot);
     }
-    // Plane silhouette (small sphere — proxy)
+    // Plane silhouette
     const plane = new THREE.Mesh(
       new THREE.SphereGeometry(0.025, 12, 12),
       new THREE.MeshBasicMaterial({ color: 0xffffff }),
@@ -815,6 +886,14 @@ function renderArcs() {
     plane.userData.color = t.color;
     plane.userData.arc = t.arc3D;
     planesGroup.add(plane);
+
+    // Globe HTML balloon label
+    const labelEl = document.createElement('div');
+    labelEl.className = 'globe-label';
+    labelEl.style.borderColor = t.color;
+    labelEl.innerHTML = `<span class="label-num">0 / ${Math.round(t.totalNm)} nm</span>`;
+    globeLabelOverlay.appendChild(labelEl);
+    globeLabelEls.push(labelEl);
 
     // ----- Disc arc -----
     const ns = 'http://www.w3.org/2000/svg';
@@ -837,14 +916,43 @@ function renderArcs() {
       dot.setAttribute('fill', t.color);
       discEndpointsGroup.appendChild(dot);
     }
-    // Plane (a circle, gets repositioned each frame)
+
+    // Plane group (circle + balloon, translated together)
+    const planeG = document.createElementNS(ns, 'g');
+    planeG.classList.add('disc-plane-group');
+    // Plane dot
     const dplane = document.createElementNS(ns, 'circle');
     dplane.setAttribute('r', '5');
     dplane.setAttribute('fill', '#fff');
     dplane.setAttribute('stroke', t.color);
     dplane.setAttribute('stroke-width', '2');
-    dplane.dataset.arcLen = t.arc2D.length;
-    discPlanesGroup.appendChild(dplane);
+    planeG.appendChild(dplane);
+    // Balloon: rect + text. Width is computed from text length so it scales.
+    const balloonG = document.createElementNS(ns, 'g');
+    balloonG.classList.add('disc-balloon');
+    balloonG.setAttribute('transform', 'translate(10, -22)');
+    const balloonRect = document.createElementNS(ns, 'rect');
+    balloonRect.setAttribute('class', 'disc-balloon-bg');
+    balloonRect.setAttribute('rx', '3'); balloonRect.setAttribute('ry', '3');
+    balloonRect.setAttribute('x', '0'); balloonRect.setAttribute('y', '0');
+    balloonRect.setAttribute('width', '90');
+    balloonRect.setAttribute('height', '17');
+    balloonRect.setAttribute('stroke', t.color);
+    balloonG.appendChild(balloonRect);
+    const balloonText = document.createElementNS(ns, 'text');
+    balloonText.setAttribute('class', 'disc-balloon-text');
+    balloonText.setAttribute('x', '5'); balloonText.setAttribute('y', '12');
+    balloonText.textContent = `0° / ${t.centralAngleDeg.toFixed(0)}°`;
+    balloonG.appendChild(balloonText);
+    // Tail: a tiny line from balloon back to plane
+    const tail = document.createElementNS(ns, 'line');
+    tail.setAttribute('x1', '0'); tail.setAttribute('y1', '17');
+    tail.setAttribute('x2', '-10'); tail.setAttribute('y2', '22');
+    tail.setAttribute('stroke', t.color);
+    tail.setAttribute('stroke-width', '1.5');
+    balloonG.appendChild(tail);
+    planeG.appendChild(balloonG);
+    discPlanesGroup.appendChild(planeG);
   }
 }
 
@@ -863,9 +971,12 @@ function renderReadout(scenario) {
         <div>
           <span class="legend-dot" style="background:${t.color}"></span>
           <strong>${t.name}</strong>
-          ${t.real
-            ? `<span style="font-family:var(--mono);font-size:.78rem;color:var(--review-muted);"> · ${t.airline}</span>`
-            : `<span style="font-family:var(--mono);font-size:.78rem;color:var(--review-muted);"> · ${t.airline}</span>`}
+          <span style="display:inline-block;font-family:var(--mono);font-size:.65rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:.1rem .4rem;border-radius:3px;margin-left:.4rem;vertical-align:1px;${
+            t.real
+              ? 'background:rgba(46,125,50,0.18);color:var(--steelman);border:1px solid var(--steelman);'
+              : 'background:rgba(245,124,0,0.15);color:var(--contradiction);border:1px solid var(--contradiction);'
+          }">${t.real ? 'real flight' : 'synthetic'}</span>
+          <span style="font-family:var(--mono);font-size:.78rem;color:var(--review-muted);"> · ${t.airline}</span>
         </div>
       </div>
       <div class="readout-row">
@@ -918,54 +1029,142 @@ function formatHM(hours) {
 }
 
 // ============ Animation loop ============
+//
+// Each track has its own progress (0 → 1) and advances at a rate
+// proportional to 1 / realFlightHours. The longest flight in the
+// active scenario takes LONGEST_LOOP_MS to complete; faster flights
+// finish sooner and then sit at their destination until all are
+// done. After a brief stall, all reset to 0 and the cycle repeats.
 
-let progress = 0;
+let progresses = [];                  // per-track progress
 let playing = true;
 let speedMul = 1;
-const LOOP_MS = 14000;  // 14 s loop ≈ "14 hours" notional
+let phase = 'flying';                 // 'flying' or 'stalled'
+let stallRemaining = 0;
+const LONGEST_LOOP_MS = 18000;        // 18 s for the longest flight
+const STALL_MS = 1800;                // pause between cycles, lets viewer read final balloons
+
+function resetProgresses() {
+  progresses = scenarioData.map(() => 0);
+  phase = 'flying';
+  stallRemaining = 0;
+}
+
+const _worldPos = new THREE.Vector3();
+const _camFwd   = new THREE.Vector3();
+
+function projectGlobeToScreen(obj3D) {
+  // Use the world position of the actual object (handles parent group
+  // rotations correctly). Caller must ensure scene.updateMatrixWorld()
+  // has run since the latest rotation update.
+  obj3D.getWorldPosition(_worldPos);
+  const ndc = _worldPos.clone().project(camera);
+  const r = globeCanvas.getBoundingClientRect();
+  const x = (ndc.x * 0.5 + 0.5) * r.width;
+  const y = (-ndc.y * 0.5 + 0.5) * r.height;
+  // Occlusion: point is behind the sphere relative to the camera.
+  const camPos = camera.position;
+  const cosAngle = _worldPos.dot(camPos) / (_worldPos.length() * camPos.length());
+  // If facing the same hemisphere as the camera, visible; otherwise dim.
+  const occluded = cosAngle < 0.05;
+  return { x, y, behind: occluded };
+}
 
 let last = performance.now();
 function tick(now) {
-  const dt = (now - last) * speedMul;
+  const rawDt = now - last;
   last = now;
+  const dt = rawDt * speedMul;
 
   // Globe rotation from drag
-  sphereMesh.rotation.y = rotY;
-  sphereMesh.rotation.x = rotX;
-  gratLatGroup.rotation.y = rotY;  gratLatGroup.rotation.x = rotX;
-  gratLonGroup.rotation.y = rotY;  gratLonGroup.rotation.x = rotX;
-  continentsGroup.rotation.y = rotY; continentsGroup.rotation.x = rotX;
-  arcsGroup.rotation.y = rotY;     arcsGroup.rotation.x = rotX;
-  endpointsGroup.rotation.y = rotY; endpointsGroup.rotation.x = rotX;
-  planesGroup.rotation.y = rotY;   planesGroup.rotation.x = rotX;
+  sphereMesh.rotation.y = rotY;       sphereMesh.rotation.x = rotX;
+  gratLatGroup.rotation.y = rotY;     gratLatGroup.rotation.x = rotX;
+  gratLonGroup.rotation.y = rotY;     gratLonGroup.rotation.x = rotX;
+  continentsGroup.rotation.y = rotY;  continentsGroup.rotation.x = rotX;
+  arcsGroup.rotation.y = rotY;        arcsGroup.rotation.x = rotX;
+  endpointsGroup.rotation.y = rotY;   endpointsGroup.rotation.x = rotX;
+  planesGroup.rotation.y = rotY;      planesGroup.rotation.x = rotX;
 
-  if (playing) progress = (progress + dt / LOOP_MS) % 1;
+  // Per-track progress
+  if (playing && scenarioData.length) {
+    if (phase === 'flying') {
+      let allDone = true;
+      // Use the longest flight in the active scenario as the time scale,
+      // so the longest plane spends LONGEST_LOOP_MS in the air.
+      const maxHours = Math.max(...scenarioData.map(t => t.flightHours));
+      for (let i = 0; i < scenarioData.length; i++) {
+        if (progresses[i] < 1) {
+          const rate = (maxHours / scenarioData[i].flightHours) / LONGEST_LOOP_MS;
+          progresses[i] += dt * rate;
+          if (progresses[i] >= 1) progresses[i] = 1;
+          else allDone = false;
+        }
+      }
+      if (allDone) { phase = 'stalled'; stallRemaining = STALL_MS; }
+    } else if (phase === 'stalled') {
+      stallRemaining -= dt;
+      if (stallRemaining <= 0) {
+        for (let i = 0; i < progresses.length; i++) progresses[i] = 0;
+        phase = 'flying';
+      }
+    }
+  }
 
-  // Update plane positions on globe
-  planesGroup.children.forEach((p, idx) => {
-    const arc = p.userData.arc;
-    if (!arc?.length) return;
-    const i = Math.min(arc.length - 1, Math.floor(progress * (arc.length - 1)));
-    const i1 = Math.min(arc.length - 1, i + 1);
-    const f = progress * (arc.length - 1) - i;
-    const v = arc[i].clone().lerp(arc[i1], f);
-    v.normalize().multiplyScalar(1.025);
-    p.position.copy(v);
-  });
+  // Force scene matrices to update before we project plane world positions
+  // for the HTML balloon overlay (otherwise we get stale positions).
+  scene.updateMatrixWorld(true);
 
-  // Update plane positions on disc
-  Array.from(discPlanesGroup.children).forEach((dp, idx) => {
-    const t = scenarioData[idx];
-    if (!t) return;
-    const arc = t.arc2D;
-    const i = Math.min(arc.length - 1, Math.floor(progress * (arc.length - 1)));
-    const i1 = Math.min(arc.length - 1, i + 1);
-    const f = progress * (arc.length - 1) - i;
-    const x = arc[i][0] + (arc[i1][0] - arc[i][0]) * f;
-    const y = arc[i][1] + (arc[i1][1] - arc[i][1]) * f;
-    dp.setAttribute('cx', x.toFixed(2));
-    dp.setAttribute('cy', y.toFixed(2));
-  });
+  // Update plane + balloon positions
+  for (let i = 0; i < scenarioData.length; i++) {
+    const t = scenarioData[i];
+    const p = progresses[i] ?? 0;
+    const arc = t.arc3D;
+    const arc2 = t.arc2D;
+
+    // ---- Globe plane ----
+    const idxF = p * (arc.length - 1);
+    const i0 = Math.min(arc.length - 1, Math.floor(idxF));
+    const i1 = Math.min(arc.length - 1, i0 + 1);
+    const f = idxF - i0;
+    const planeMesh = planesGroup.children[i];
+    if (planeMesh) {
+      const v = arc[i0].clone().lerp(arc[i1], f).normalize().multiplyScalar(1.025);
+      planeMesh.position.copy(v);
+    }
+    // Globe HTML balloon
+    const labelEl = globeLabelEls[i];
+    if (labelEl && planeMesh) {
+      const traversedNm = p * t.totalNm;
+      labelEl.querySelector('.label-num').textContent =
+        `${formatNm(traversedNm)} / ${formatNm(t.totalNm)} nm`;
+      const proj = projectGlobeToScreen(planeMesh);
+      labelEl.style.left = proj.x + 'px';
+      labelEl.style.top  = proj.y + 'px';
+      labelEl.classList.toggle('behind', proj.behind);
+    }
+
+    // ---- Disc plane ----
+    const i0d = Math.min(arc2.length - 1, Math.floor(p * (arc2.length - 1)));
+    const i1d = Math.min(arc2.length - 1, i0d + 1);
+    const fd  = p * (arc2.length - 1) - i0d;
+    const x = arc2[i0d][0] + (arc2[i1d][0] - arc2[i0d][0]) * fd;
+    const y = arc2[i0d][1] + (arc2[i1d][1] - arc2[i0d][1]) * fd;
+    const planeG = discPlanesGroup.children[i];
+    if (planeG) {
+      planeG.setAttribute('transform', `translate(${x.toFixed(2)} ${y.toFixed(2)})`);
+      // Update balloon text: degrees on the disc side.
+      const traversedDeg = p * t.centralAngleDeg;
+      const text = planeG.querySelector('.disc-balloon-text');
+      const rect = planeG.querySelector('.disc-balloon-bg');
+      if (text) {
+        text.textContent = `${traversedDeg.toFixed(1)}° / ${t.centralAngleDeg.toFixed(1)}°`;
+        const w = text.getComputedTextLength
+          ? Math.max(70, text.getComputedTextLength() + 10)
+          : 90;
+        rect.setAttribute('width', w);
+      }
+    }
+  }
 
   resizeRenderer();
   renderer.render(scene, camera);
@@ -973,12 +1172,17 @@ function tick(now) {
 }
 requestAnimationFrame((t) => { last = t; tick(t); });
 
+function formatNm(nm) {
+  if (nm >= 1000) return Math.round(nm / 10) * 10;  // round to nearest 10 for readability
+  return Math.round(nm);
+}
+
 // Controls
 document.getElementById('play-pause').addEventListener('click', (e) => {
   playing = !playing;
   e.target.textContent = playing ? '⏸ Pause' : '▶ Play';
 });
-document.getElementById('restart').addEventListener('click', () => { progress = 0; });
+document.getElementById('restart').addEventListener('click', () => { resetProgresses(); });
 const speedEl = document.getElementById('speed');
 const speedVal = document.getElementById('speed-val');
 speedEl.addEventListener('input', () => {
