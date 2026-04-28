@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Flat Earth Conceptual Model Review — Fun With Science</title>
+<meta name="description" content="A scientific critical review of the Conceptual Flat Earth Model by Alan Space Audits — globe physics in a disc costume, AI-stacking patterns, and a co-opted live demo.">
+
+<meta property="og:type" content="website">
+<meta property="og:title" content="Flat Earth Conceptual Model Review">
+<meta property="og:description" content="A scientific critical review of the Conceptual Flat Earth Model — globe physics in a disc costume, AI-stacking patterns, and a co-opted live demo.">
+<meta property="og:url" content="https://funwithscience.net/flat-earth-model-review/">
+<link rel="canonical" href="https://funwithscience.net/flat-earth-model-review/">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  color-scheme: light dark;
+  --bg: #fff;
+  --text: #222;
+  --heading: #2E4057;
+  --accent: #4A6FA5;
+  --link: #0563C1;
+  --border: #ccc;
+  --rule: #E4DDCB;
+  --code-bg: #f5f5f5;
+  --card-bg: #fafafa;
+  --muted: #6E675B;
+
+  --tag-stdmodel:   rgba(102,187,106,0.25);
+  --tag-stdmodel-s: #66BB6A;
+  --tag-selfcon:    rgba(66,165,245,0.25);
+  --tag-selfcon-s:  #42A5F5;
+  --tag-misleading: rgba(255,167,38,0.25);
+  --tag-misleading-s: #FFA726;
+  --tag-aistack:    rgba(171,71,188,0.25);
+  --tag-aistack-s:  #AB47BC;
+  --tag-steelman:   rgba(189,189,189,0.25);
+  --tag-steelman-s: #BDBDBD;
+
+  --serif: 'Source Serif 4', Georgia, 'Times New Roman', serif;
+  --sans:  'Inter', system-ui, -apple-system, 'Segoe UI', Arial, sans-serif;
+  --mono:  'JetBrains Mono', ui-monospace, 'SF Mono', Consolas, 'Courier New', monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1a2e;
+    --text: #e0e0e0;
+    --heading: #cfd8e3;
+    --accent: #8fafd4;
+    --link: #7ab8ff;
+    --border: #303048;
+    --rule: #303048;
+    --code-bg: #15182a;
+    --card-bg: #1f2238;
+    --muted: #9a9a9a;
+  }
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--serif);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+.wrap { max-width: 960px; margin: 0 auto; padding: 1rem 1.5rem 3rem; }
+
+header.site {
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 1.25rem;
+  margin-bottom: 1rem;
+}
+.site h1 {
+  font-size: clamp(1.6rem, 4vw, 2.25rem);
+  font-weight: 600;
+  margin: 0 0 .25rem;
+  color: var(--heading);
+  letter-spacing: -0.01em;
+}
+.site .tagline {
+  margin: 0;
+  color: var(--muted);
+  font-family: var(--sans);
+  font-size: .98rem;
+}
+.site .meta {
+  margin: .5rem 0 0;
+  color: var(--muted);
+  font-family: var(--sans);
+  font-size: .82rem;
+}
+.site .meta a { color: var(--link); text-decoration: none; }
+.site .meta a:hover { text-decoration: underline; }
+
+nav.tabs {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  flex-wrap: wrap;
+  gap: .25rem;
+  padding: .5rem 0;
+  margin-bottom: 1.5rem;
+  font-family: var(--sans);
+}
+nav.tabs button {
+  background: transparent;
+  color: var(--text);
+  border: 1px solid transparent;
+  border-radius: 4px;
+  padding: .4rem .85rem;
+  font-family: inherit;
+  font-size: .92rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background .15s, border-color .15s;
+}
+nav.tabs button:hover { border-color: var(--border); }
+nav.tabs button.active {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
+main h1 {
+  font-size: 1.85rem;
+  font-weight: 600;
+  color: var(--heading);
+  border-bottom: 2px solid var(--accent);
+  padding-bottom: .25rem;
+  margin: 1.5rem 0 1rem;
+}
+main h2 {
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: var(--heading);
+  margin: 2rem 0 .75rem;
+}
+main h3 {
+  font-size: 1.12rem;
+  font-weight: 600;
+  color: var(--accent);
+  margin: 1.5rem 0 .5rem;
+}
+main p, main li { font-size: 1.02rem; }
+main blockquote {
+  border-left: 3px solid var(--rule);
+  margin: 1rem 0;
+  padding: .25rem 0 .25rem 1rem;
+  color: var(--muted);
+  font-style: italic;
+}
+main blockquote p { margin: .35em 0; }
+main code {
+  font-family: var(--mono);
+  background: var(--code-bg);
+  padding: .1em .35em;
+  border-radius: 3px;
+  font-size: .92em;
+}
+main pre {
+  background: var(--code-bg);
+  padding: .8rem 1rem;
+  border-left: 3px solid var(--rule);
+  border-radius: 0 4px 4px 0;
+  overflow-x: auto;
+  font-size: .88rem;
+  line-height: 1.5;
+}
+main pre code {
+  background: transparent;
+  padding: 0;
+  font-size: 1em;
+}
+main a { color: var(--link); }
+
+main table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1rem 0;
+  font-family: var(--sans);
+  font-size: .92rem;
+}
+main th, main td {
+  border: 1px solid var(--border);
+  padding: .5rem .75rem;
+  text-align: left;
+  vertical-align: top;
+}
+main th {
+  background: var(--card-bg);
+  font-weight: 600;
+}
+
+/* Verdict tags inside blockquote — recognise the shape ">" + "**TAG**" */
+.tag {
+  display: inline-block;
+  font-family: var(--sans);
+  font-weight: 600;
+  font-size: .72rem;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  padding: .15rem .55rem;
+  border-radius: 3px;
+  margin-right: .35rem;
+  vertical-align: 1px;
+}
+.tag.std-model   { background: var(--tag-stdmodel);   border: 1px solid var(--tag-stdmodel-s); }
+.tag.self-con    { background: var(--tag-selfcon);    border: 1px solid var(--tag-selfcon-s); }
+.tag.misleading  { background: var(--tag-misleading); border: 1px solid var(--tag-misleading-s); }
+.tag.ai-stack    { background: var(--tag-aistack);    border: 1px solid var(--tag-aistack-s); }
+.tag.steelman    { background: var(--tag-steelman);   border: 1px solid var(--tag-steelman-s); }
+
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+.section-nav {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 3rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+  font-family: var(--sans);
+  font-size: .92rem;
+}
+.section-nav a {
+  color: var(--link);
+  text-decoration: none;
+  cursor: pointer;
+}
+.section-nav a:hover { text-decoration: underline; }
+
+footer.site-foot {
+  margin-top: 3rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--border);
+  font-size: .85rem;
+  color: var(--muted);
+  font-family: var(--sans);
+  text-align: center;
+}
+footer.site-foot a { color: var(--muted); }
+
+.loading {
+  color: var(--muted);
+  font-family: var(--sans);
+  font-style: italic;
+  padding: 2rem 0;
+  text-align: center;
+}
+
+@media print {
+  nav.tabs { display: none; }
+  .tab-content { display: block !important; page-break-before: always; }
+  .section-nav { display: none; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="site">
+  <h1>Flat Earth Conceptual Model Review</h1>
+  <p class="tagline">A scientific critical review of <a href="https://alanspaceaudits.github.io/conceptual_flat_earth_model/">Alan Space Audits' Conceptual Flat Earth Model</a> — globe physics in a disc costume, AI-stacking patterns, and a live co-opted demo.</p>
+  <p class="meta">
+    <span id="date-ver">April 28, 2026 · Version 1.0.0</span> ·
+    <a href="https://github.com/funwithscience-org/flat-earth-model-review">github.com/funwithscience-org/flat-earth-model-review</a> ·
+    Part of <a href="https://funwithscience.net/">funwithscience.net</a>
+  </p>
+</header>
+
+<nav class="tabs" id="tabs">
+  <button data-tab="overview" class="active">The Model</button>
+  <button data-tab="physics">Globe Physics in a Disc Costume</button>
+  <button data-tab="aistack">AI Stacking</button>
+  <button data-tab="demo">Co-opted Demo</button>
+</nav>
+
+<main>
+  <section class="tab-content active" id="tab-overview">
+    <div class="loading">Loading…</div>
+  </section>
+  <section class="tab-content" id="tab-physics">
+    <div class="loading">Loading…</div>
+  </section>
+  <section class="tab-content" id="tab-aistack">
+    <div class="loading">Loading…</div>
+  </section>
+  <section class="tab-content" id="tab-demo">
+    <div class="loading">Loading…</div>
+  </section>
+</main>
+
+<footer class="site-foot">
+  <p>Source markdown and review history: <a href="https://github.com/funwithscience-org/flat-earth-model-review">github.com/funwithscience-org/flat-earth-model-review</a></p>
+  <p>Sibling reviews: <a href="https://funwithscience.net/dome-model-review/">Dome Model Review</a> · <a href="https://funwithscience.net/kells-analysis/">Kell Solar Measurement Analysis</a></p>
+</footer>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
+<script>
+const TAB_TO_FILE = {
+  overview: 'sections/00-overview.md',
+  physics:  'sections/01-globe-physics-in-disc-costume.md',
+  aistack:  'sections/02-ai-stacking.md',
+  demo:     'sections/03-co-opted-demo.md',
+};
+const TAB_ORDER = ['overview', 'physics', 'aistack', 'demo'];
+
+// Tag rewriter — turns first-line ">**STD MODEL**" patterns into colored chips.
+const TAG_MAP = {
+  'STD MODEL':  'std-model',
+  'SELF-CON':   'self-con',
+  'MISLEADING': 'misleading',
+  'AI-STACK':   'ai-stack',
+  'STEELMAN':   'steelman',
+};
+function tagify(html) {
+  return html.replace(
+    /<blockquote>\s*<p>([^<]+?)<\/p>/g,
+    (m, line) => {
+      // Only rewrite the first paragraph if it is purely tag content
+      const trimmed = line.trim();
+      // Recognise patterns like "**STD MODEL · MISLEADING**" or "**STD MODEL**"
+      const tagOnly = /^(?:<strong>([A-Z·\s\-]+)<\/strong>\s*)+$/;
+      if (!tagOnly.test(trimmed)) return m;
+      // Replace each <strong>TAG</strong> with a styled span
+      const rewritten = trimmed.replace(/<strong>([A-Z·\s\-]+)<\/strong>/g,
+        (mm, tagText) => {
+          return tagText.split('·').map(t => {
+            const key = t.trim();
+            const cls = TAG_MAP[key] || 'steelman';
+            return `<span class="tag ${cls}">${key}</span>`;
+          }).join(' ');
+        });
+      return `<blockquote class="verdict"><p>${rewritten}</p>`;
+    }
+  );
+}
+
+async function loadTab(name) {
+  const target = document.getElementById('tab-' + name);
+  if (target.dataset.loaded === '1') return;
+  try {
+    const res = await fetch(TAB_TO_FILE[name]);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const md = await res.text();
+    let html = marked.parse(md);
+    html = tagify(html);
+
+    const idx = TAB_ORDER.indexOf(name);
+    const prev = idx > 0 ? TAB_ORDER[idx - 1] : null;
+    const next = idx < TAB_ORDER.length - 1 ? TAB_ORDER[idx + 1] : null;
+    const labels = {
+      overview: 'The Model',
+      physics:  'Globe Physics in a Disc Costume',
+      aistack:  'AI Stacking',
+      demo:     'Co-opted Demo',
+    };
+    const navHtml = `
+      <div class="section-nav">
+        <span>${prev ? `<a data-jump="${prev}">← ${labels[prev]}</a>` : ''}</span>
+        <span>${next ? `<a data-jump="${next}">${labels[next]} →</a>` : ''}</span>
+      </div>`;
+    target.innerHTML = html + navHtml;
+    target.dataset.loaded = '1';
+
+    target.querySelectorAll('a[data-jump]').forEach(a => {
+      a.addEventListener('click', e => {
+        e.preventDefault();
+        showTab(a.dataset.jump);
+      });
+    });
+  } catch (err) {
+    target.innerHTML = `<div class="loading">Failed to load section: ${err.message}.<br><br>If you're previewing locally, this page needs to be served over HTTP rather than opened from <code>file://</code>. Run <code>npx serve docs</code> from the repo root, or visit the live site at <a href="https://funwithscience.net/flat-earth-model-review/">funwithscience.net/flat-earth-model-review/</a>.</div>`;
+  }
+}
+
+function showTab(name) {
+  document.querySelectorAll('nav.tabs button').forEach(b => {
+    b.classList.toggle('active', b.dataset.tab === name);
+  });
+  document.querySelectorAll('.tab-content').forEach(t => {
+    t.classList.toggle('active', t.id === 'tab-' + name);
+  });
+  loadTab(name);
+  if (history.replaceState) history.replaceState(null, '', '#' + name);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+document.querySelectorAll('nav.tabs button').forEach(b => {
+  b.addEventListener('click', () => showTab(b.dataset.tab));
+});
+
+const initial = (location.hash || '#overview').slice(1);
+if (TAB_ORDER.includes(initial)) showTab(initial);
+else loadTab('overview');
+</script>
+</body>
+</html>

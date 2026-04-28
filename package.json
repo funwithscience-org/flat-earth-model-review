@@ -1,0 +1,17 @@
+{
+  "name": "flat-earth-model-review",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Scientific critical review of Alan Space Audits' Conceptual Flat Earth Model.",
+  "scripts": {
+    "build": "node build.js",
+    "serve": "npx --yes serve docs",
+    "test": "node monitor/run.js"
+  },
+  "license": "CC-BY-SA-4.0",
+  "homepage": "https://funwithscience.net/flat-earth-model-review/",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/funwithscience-org/flat-earth-model-review"
+  }
+}

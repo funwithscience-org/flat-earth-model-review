@@ -1,0 +1,25 @@
+{
+  "built": "2026-04-28T17:48:20.255Z",
+  "sections": [
+    {
+      "file": "00-overview.md",
+      "bytes": 5346,
+      "mtime": "2026-04-28T17:41:41.660Z"
+    },
+    {
+      "file": "01-globe-physics-in-disc-costume.md",
+      "bytes": 18023,
+      "mtime": "2026-04-28T17:43:35.744Z"
+    },
+    {
+      "file": "02-ai-stacking.md",
+      "bytes": 12674,
+      "mtime": "2026-04-28T17:45:08.866Z"
+    },
+    {
+      "file": "03-co-opted-demo.md",
+      "bytes": 5653,
+      "mtime": "2026-04-28T17:45:52.044Z"
+    }
+  ]
+}
