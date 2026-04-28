@@ -16,7 +16,11 @@ const HTML  = path.join(ROOT, 'docs', 'index.html');
 
 if (!fs.existsSync(OUT)) fs.mkdirSync(OUT, { recursive: true });
 
-const files = fs.readdirSync(SRC).filter(f => f.endsWith('.md')).sort();
+// Underscore-prefixed files are treated as private working notes and not
+// copied into docs/sections (so the public site never sees them).
+const files = fs.readdirSync(SRC)
+  .filter(f => f.endsWith('.md') && !f.startsWith('_'))
+  .sort();
 const manifest = [];
 
 for (const f of files) {

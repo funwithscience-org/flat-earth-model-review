@@ -311,7 +311,8 @@ const TAB_TO_FILE = {
   overview: 'sections/00-overview.md',
   physics:  'sections/01-globe-physics-in-disc-costume.md',
   aistack:  'sections/02-ai-stacking.md',
-  demo:     'sections/03-co-opted-demo.md',
+  // demo tab loads live/index.html as raw HTML (handled separately
+  // in loadTab below) — not markdown.
 };
 const TAB_ORDER = ['overview', 'physics', 'aistack', 'demo'];
 
@@ -346,41 +347,151 @@ function tagify(html) {
   );
 }
 
+const LABELS = {
+  overview: 'The Model',
+  physics:  'Globe Physics in a Disc Costume',
+  aistack:  'AI Stacking',
+  demo:     'Co-opted Demo',
+};
+
+function makeNavHtml(name) {
+  const idx = TAB_ORDER.indexOf(name);
+  const prev = idx > 0 ? TAB_ORDER[idx - 1] : null;
+  const next = idx < TAB_ORDER.length - 1 ? TAB_ORDER[idx + 1] : null;
+  return `
+    <div class="section-nav">
+      <span>${prev ? `<a data-jump="${prev}">← ${LABELS[prev]}</a>` : ''}</span>
+      <span>${next ? `<a data-jump="${next}">${LABELS[next]} →</a>` : ''}</span>
+    </div>`;
+}
+
+function wireJumpLinks(target) {
+  target.querySelectorAll('a[data-jump]').forEach(a => {
+    a.addEventListener('click', e => {
+      e.preventDefault();
+      showTab(a.dataset.jump);
+    });
+  });
+}
+
 async function loadTab(name) {
   const target = document.getElementById('tab-' + name);
   if (target.dataset.loaded === '1') return;
+  // The demo tab loads /live/ as raw HTML (with its scripts) — different code path.
+  if (name === 'demo') return loadDemoTab(target);
   try {
     const res = await fetch(TAB_TO_FILE[name]);
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const md = await res.text();
     let html = marked.parse(md);
     html = tagify(html);
-
-    const idx = TAB_ORDER.indexOf(name);
-    const prev = idx > 0 ? TAB_ORDER[idx - 1] : null;
-    const next = idx < TAB_ORDER.length - 1 ? TAB_ORDER[idx + 1] : null;
-    const labels = {
-      overview: 'The Model',
-      physics:  'Globe Physics in a Disc Costume',
-      aistack:  'AI Stacking',
-      demo:     'Co-opted Demo',
-    };
-    const navHtml = `
-      <div class="section-nav">
-        <span>${prev ? `<a data-jump="${prev}">← ${labels[prev]}</a>` : ''}</span>
-        <span>${next ? `<a data-jump="${next}">${labels[next]} →</a>` : ''}</span>
-      </div>`;
-    target.innerHTML = html + navHtml;
+    target.innerHTML = html + makeNavHtml(name);
     target.dataset.loaded = '1';
-
-    target.querySelectorAll('a[data-jump]').forEach(a => {
-      a.addEventListener('click', e => {
-        e.preventDefault();
-        showTab(a.dataset.jump);
-      });
-    });
+    wireJumpLinks(target);
   } catch (err) {
     target.innerHTML = `<div class="loading">Failed to load section: ${err.message}.<br><br>If you're previewing locally, this page needs to be served over HTTP rather than opened from <code>file://</code>. Run <code>npx serve docs</code> from the repo root, or visit the live site at <a href="https://funwithscience.net/flat-earth-model-review/">funwithscience.net/flat-earth-model-review/</a>.</div>`;
+  }
+}
+
+// Loads the live/ page directly into the demo tab. We fetch the HTML,
+// extract its <style>, <link rel="stylesheet">, importmap, body
+// content, and scripts; then re-create them in our document so they
+// actually run. innerHTML alone wouldn't execute the scripts.
+async function loadDemoTab(target) {
+  try {
+    const res = await fetch('live/');
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const liveHtml = await res.text();
+
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(liveHtml, 'text/html');
+
+    // 1. Add live page's <style> blocks to our <head> (idempotent)
+    if (!document.getElementById('live-injected-styles')) {
+      const styleEl = document.createElement('style');
+      styleEl.id = 'live-injected-styles';
+      // Scope live page's :root variables and styles to the demo tab so
+      // they don't clobber the parent page. We do this by wrapping every
+      // rule in `#tab-demo` — but :root vars need to apply to the tab too.
+      let combinedCss = '';
+      doc.querySelectorAll('style').forEach(s => {
+        combinedCss += '\n' + s.textContent;
+      });
+      // The live page sets its own --bg, --text, etc. on :root. To avoid
+      // overriding the parent review page, scope them under #tab-demo.
+      // Simplest transform: replace ':root {' with '#tab-demo {'.
+      combinedCss = combinedCss.replace(/:root\s*\{/g, '#tab-demo {');
+      // Also, the live page's `body` rules need to be scoped to #tab-demo.
+      combinedCss = combinedCss
+        .replace(/(^|\})\s*body\s*\{/g, '$1 #tab-demo {')
+        .replace(/(^|\})\s*html,\s*body\s*\{[^}]*\}/g, '$1');
+      // Wrap remaining rules under #tab-demo so they don't escape.
+      // (We don't aggressively re-scope every selector; the live page's
+      // selectors are already specific — `.scenario-picker`, `.view-pane`,
+      // `#globe-canvas`, etc. — and these only exist inside #tab-demo.)
+      styleEl.textContent = combinedCss;
+      document.head.appendChild(styleEl);
+    }
+
+    // 2. Add live page's <link rel="stylesheet"> (idempotent)
+    doc.querySelectorAll('link[rel="stylesheet"]').forEach(l => {
+      const href = l.getAttribute('href');
+      if (!document.querySelector(`link[rel="stylesheet"][href="${href}"]`)) {
+        const newLink = document.createElement('link');
+        newLink.rel = 'stylesheet';
+        newLink.href = href;
+        document.head.appendChild(newLink);
+      }
+    });
+
+    // 3. Add importmap to <head> (must come before module scripts)
+    doc.querySelectorAll('script[type="importmap"]').forEach(s => {
+      if (!document.querySelector('script[type="importmap"]')) {
+        const newScript = document.createElement('script');
+        newScript.type = 'importmap';
+        newScript.textContent = s.textContent;
+        document.head.appendChild(newScript);
+      }
+    });
+
+    // 4. Inject body content (the .wrap inner HTML) into the tab
+    const wrap = doc.querySelector('.wrap') || doc.body;
+    target.innerHTML = wrap.innerHTML + makeNavHtml('demo');
+    wireJumpLinks(target);
+
+    // 5. Re-create regular and module scripts so they actually execute.
+    // (innerHTML strips/disables script execution.) Rewrite relative
+    // import paths from './xxx' to './live/xxx' so they resolve against
+    // the parent page's base URL.
+    const scriptsToRun = doc.querySelectorAll('script:not([type="importmap"])');
+    for (const s of scriptsToRun) {
+      const newScript = document.createElement('script');
+      if (s.type) newScript.type = s.type;
+      if (s.src) {
+        if (document.querySelector(`script[src="${s.src}"]`)) continue;
+        newScript.src = s.src;
+      } else {
+        let text = s.textContent;
+        // Rewrite relative imports for module scripts: './x.js' → './live/x.js'
+        if (s.type === 'module') {
+          text = text.replace(
+            /(from\s+['"])\.\/([^'"]+)(['"])/g,
+            (m, pre, path, post) => `${pre}./live/${path}${post}`,
+          );
+          // Also handle dynamic import() — same rewrite
+          text = text.replace(
+            /(import\s*\(\s*['"])\.\/([^'"]+)(['"])/g,
+            (m, pre, path, post) => `${pre}./live/${path}${post}`,
+          );
+        }
+        newScript.textContent = text;
+      }
+      document.body.appendChild(newScript);
+    }
+
+    target.dataset.loaded = '1';
+  } catch (err) {
+    target.innerHTML = `<div class="loading">Failed to load demo: ${err.message}. <a href="live/">Open it directly →</a></div>`;
   }
 }
 
