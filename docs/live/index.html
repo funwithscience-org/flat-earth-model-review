@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Live Demonstrations — Flat Earth Conceptual Model Review</title>
+<meta name="description" content="Three live demonstrations using the subject model's own data and functions: AE disc-arc lengths, mph hidden inside deg/h units, and twenty projection skins sharing one coordinate framework.">
+<link rel="canonical" href="https://funwithscience.net/flat-earth-model-review/live/">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  color-scheme: light dark;
+  --bg: #fff;
+  --text: #222;
+  --heading: #2E4057;
+  --accent: #4A6FA5;
+  --link: #0563C1;
+  --border: #ccc;
+  --rule: #E4DDCB;
+  --code-bg: #f5f5f5;
+  --card-bg: #fafafa;
+  --muted: #6E675B;
+  --serif: 'Source Serif 4', Georgia, serif;
+  --sans:  'Inter', system-ui, -apple-system, sans-serif;
+  --mono:  'JetBrains Mono', ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1a2e;
+    --text: #e0e0e0;
+    --heading: #cfd8e3;
+    --accent: #8fafd4;
+    --link: #7ab8ff;
+    --border: #303048;
+    --rule: #303048;
+    --code-bg: #15182a;
+    --card-bg: #1f2238;
+    --muted: #9a9a9a;
+  }
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--serif);
+  line-height: 1.6;
+}
+.wrap { max-width: 960px; margin: 0 auto; padding: 1rem 1.5rem 3rem; }
+
+header.site {
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+header.site h1 {
+  font-size: clamp(1.5rem, 4vw, 2rem);
+  margin: 0 0 .25rem;
+  color: var(--heading);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+header.site p { margin: .25rem 0 0; color: var(--muted); font-family: var(--sans); font-size: .95rem; }
+header.site a { color: var(--link); text-decoration: none; }
+header.site a:hover { text-decoration: underline; }
+
+main h2 {
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: var(--heading);
+  margin: 2.5rem 0 .25rem;
+  border-bottom: 2px solid var(--accent);
+  padding-bottom: .25rem;
+}
+main h2 .subhead {
+  display: block;
+  font-size: .85rem;
+  font-weight: 400;
+  font-family: var(--sans);
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  margin-bottom: .15rem;
+}
+main h3 {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--accent);
+  margin: 1rem 0 .5rem;
+  font-family: var(--sans);
+}
+main p, main li { font-size: 1rem; }
+main code {
+  font-family: var(--mono);
+  background: var(--code-bg);
+  padding: .1em .4em;
+  border-radius: 3px;
+  font-size: .92em;
+}
+main pre {
+  background: var(--code-bg);
+  padding: .8rem 1rem;
+  border-left: 3px solid var(--rule);
+  border-radius: 0 4px 4px 0;
+  overflow-x: auto;
+  font-size: .85rem;
+}
+main pre code { background: transparent; padding: 0; }
+main a { color: var(--link); }
+
+.lede {
+  font-size: 1.05rem;
+  margin: 1rem 0 2rem;
+  color: var(--text);
+}
+
+/* Demo 1 — Equal Arc */
+.demo-picker {
+  display: flex;
+  gap: .5rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+  font-family: var(--sans);
+}
+.demo-picker button {
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: .4rem .75rem;
+  font-family: inherit;
+  font-size: .88rem;
+  cursor: pointer;
+  transition: background .15s, border-color .15s;
+}
+.demo-picker button:hover { border-color: var(--accent); }
+.demo-picker button.active {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
+.demo-stage {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+.demo-stage svg { width: 100%; height: auto; display: block; }
+
+.demo-readout {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 1rem 1.25rem;
+  font-family: var(--sans);
+}
+.demo-readout-row {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  flex-wrap: wrap;
+  padding: .5rem 0;
+  border-bottom: 1px dashed var(--border);
+  font-size: .92rem;
+}
+.demo-readout-row:last-of-type { border-bottom: none; }
+.demo-readout-row.demo-conclusion {
+  background: rgba(255,167,38,0.10);
+  margin: .5rem -1.25rem 0;
+  padding: .75rem 1.25rem;
+  border-radius: 0 0 4px 4px;
+}
+.demo-stat { color: var(--muted); font-size: .9rem; }
+.demo-stat code { font-size: .95em; }
+.demo-conclusion code.big { font-size: 1.15rem; font-weight: 600; }
+.legend-dot {
+  display: inline-block;
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  margin-right: .35rem;
+  vertical-align: 2px;
+}
+.demo-note {
+  font-family: var(--serif);
+  color: var(--text);
+  margin: .75rem 0 0;
+  font-size: .96rem;
+  line-height: 1.6;
+}
+.badge {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: .68rem;
+  text-transform: uppercase;
+  letter-spacing: .03em;
+  padding: .1rem .4rem;
+  border-radius: 3px;
+  margin-left: .35rem;
+  vertical-align: 1px;
+}
+.badge.real      { background: rgba(102,187,106,0.20); border: 1px solid #66BB6A; color: var(--text); }
+.badge.synthetic { background: rgba(255,167,38,0.20); border: 1px solid #FFA726; color: var(--text); }
+
+/* Demo 2 — mph */
+.qf-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+.qf-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: .75rem 1rem 1rem;
+}
+.qf-card h3 { margin: 0 0 .5rem; font-family: var(--sans); font-size: .98rem; color: var(--heading); }
+.qf-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--sans);
+  font-size: .88rem;
+}
+.qf-table th, .qf-table td {
+  text-align: left;
+  padding: .4rem .5rem;
+  border-bottom: 1px dashed var(--border);
+  vertical-align: top;
+}
+.qf-table th {
+  font-weight: 600;
+  color: var(--muted);
+  font-size: .78rem;
+  text-transform: uppercase;
+  letter-spacing: .03em;
+}
+.qf-table td.muted { color: var(--muted); font-size: .82rem; }
+
+/* Demo 3 — Skins */
+.skins-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: .75rem;
+  margin-bottom: 1rem;
+}
+@media (max-width: 600px) {
+  .skins-grid { grid-template-columns: 1fr; }
+}
+.skin-panel {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: .5rem .5rem .25rem;
+}
+.skin-panel h3 {
+  margin: 0 0 .35rem;
+  font-family: var(--sans);
+  font-size: .85rem;
+  color: var(--accent);
+  text-align: center;
+}
+.skin-panel svg { width: 100%; height: auto; display: block; border-radius: 3px; }
+
+footer.site-foot {
+  margin-top: 4rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--border);
+  font-size: .85rem;
+  color: var(--muted);
+  font-family: var(--sans);
+  text-align: center;
+}
+footer.site-foot a { color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="site">
+  <h1>Live Demonstrations</h1>
+  <p>Three findings from the <a href="../">Flat Earth Conceptual Model Review</a>, computed and rendered live using the subject model's own data and functions.</p>
+  <p>← <a href="../">Back to the review</a> · <a href="https://alanspaceaudits.github.io/conceptual_flat_earth_model/" rel="external">Subject site</a> · <a href="https://github.com/AlanSpaceAudits/conceptual_flat_earth_model" rel="external">Subject source</a></p>
+</header>
+
+<main>
+
+<p class="lede">
+The subject model insists, in its own words, that it uses
+<em>"no earth radius, no kilometres, no great-circle trigonometry."</em>
+The three demonstrations below render that claim against the model's own
+source code and bundled data. Every number on this page comes from
+re-running the subject's own functions.
+</p>
+
+<section>
+  <h2>
+    <span class="subhead">Demonstration 1 · Self-contradiction</span>
+    Equal Arc, Unequal Disc
+  </h2>
+  <p>
+    The subject's "Equal Arc Flight (N/S)" demos pair a southern
+    flight with a northern partner having the same central angle
+    on a sphere, drive both with a single normalized progress
+    tween, and show both planes finishing at the same wall-clock
+    time. The framing offered is <em>"Equal arc → equal time,
+    regardless of projection distortion."</em> What this section
+    measures is the actual disc path length each arc gets drawn
+    with on the canonical AE projection his sim is committed to
+    underneath all 20 projection skins.
+  </p>
+  <div id="demo-equal-arc"></div>
+</section>
+
+<section>
+  <h2>
+    <span class="subhead">Demonstration 2 · Co-opt with relabel</span>
+    QF27/QF28 in mph
+  </h2>
+  <p>
+    The bundled <code>flightTracks.js</code> contains 241-waypoint
+    actual flight tracks for Qantas QF27/QF28 with per-waypoint
+    air speed, ground speed, heading, and wind, all in mph. The
+    subject's QF demo displays "Air Speed (avg)" and "Ground
+    Speed (calc)" in degrees-minutes-seconds per hour. The
+    conversion goes through a hard-coded constant in
+    <code>js/demos/flightRoutes.js</code>:
+  </p>
+  <pre><code>const MI_PER_DEG = 69.0936;
+const mphToDegPerHour = (mph) =&gt; (mph == null || !isFinite(mph)) ? null : mph / MI_PER_DEG;</code></pre>
+  <p>
+    <code>69.0936</code> is the Earth's mean great-circle
+    circumference (≈ 24 873 statute miles) divided by 360°.
+    The mph values below are the values his model already has,
+    but is configured not to display.
+  </p>
+  <div id="demo-mph"></div>
+</section>
+
+<section>
+  <h2>
+    <span class="subhead">Demonstration 3 · Cosmetic dropdown</span>
+    One Geometry, Twenty Skins
+  </h2>
+  <p>
+    Per <code>js/core/canonical.js</code>, every coordinate
+    operation in his simulator routes through one specific
+    projection (north-pole AE) regardless of which "FE Map" the
+    user has selected. The dropdown that offers Mercator,
+    AE-Dual, Hellerick, Mollweide, Robinson, Equal Earth, and
+    fifteen others is decorative — none of them change the
+    geometry layer's math. The four panels below render the same
+    Santiago ↔ Sydney route through four projection skins; the
+    <code>(lat, lon)</code> values feeding every dot are
+    identical in all four.
+  </p>
+  <div id="demo-skins"></div>
+</section>
+
+<section>
+  <h2>
+    <span class="subhead">Coming next</span>
+    Planned demonstrations
+  </h2>
+  <ul>
+    <li>
+      <strong>Sun altitude — interpolated vs spherical.</strong>
+      For a given observer and date, show the sun's height on
+      his vault from the
+      <code>headroom = 0.12</code> linear interpolation in
+      <code>feGeometry.js</code> alongside the altitude his
+      simulator computes from the spherical RA/Dec → Az/El
+      identity in <code>transforms.js</code>. The two answers
+      should be different at high latitudes; the model uses one
+      for the visualisation and the other for the readout.
+    </li>
+    <li>
+      <strong>GeoC fallback exposed.</strong>
+      Side-by-side query of all five ephemeris pipelines for
+      Mercury, Venus, Mars, Jupiter, Saturn, Uranus, Neptune at
+      a chosen date. Highlight the cells where his dispatcher's
+      <code>DE405 → GeoC → VSOP87 → Ptolemy</code> fallback
+      chain silently substitutes DE405 (the heliocentric
+      default) for the requested geocentric pipeline.
+    </li>
+    <li>
+      <strong>Annotated source viewer.</strong>
+      Each finding from the review linked to the exact line in
+      his GitHub source, with the verbatim comment context and a
+      one-line explanation. Pinned to commit
+      <code>8b0921a</code>; will surface drift if the upstream
+      changes.
+    </li>
+  </ul>
+</section>
+
+</main>
+
+<footer class="site-foot">
+  <p>
+    All numbers above were computed live from the subject model's
+    own functions and bundled data, fixed at upstream commit
+    <code>8b0921a</code>. Source for this page:
+    <a href="https://github.com/funwithscience-org/flat-earth-model-review/tree/main/docs/live">github.com/funwithscience-org/flat-earth-model-review</a>.
+  </p>
+  <p>
+    ← <a href="../">Back to the review</a>
+  </p>
+</footer>
+
+</div>
+
+<script type="module" src="demos.js"></script>
+</body>
+</html>

@@ -202,8 +202,10 @@ For QF28 (Santiago → Sydney), the bundled track gives ~14:06:37 actual flight 
 
 A genuinely flat-earth model would have to either:
 
-- compute ground speed in actual disc-distance per hour (in which case the southern Pacific arc on the AE projection is roughly 2× longer than its lat-mirrored northern equivalent, and the "equal time" claim becomes "the southern plane flew at 2× the airspeed"),
+- compute ground speed in actual disc-distance per hour (in which case the southern Pacific arc on the AE projection is roughly **3.3× longer in disc-units than its lat-mirrored northern equivalent**, and the "equal time" claim becomes "the southern plane flew at 3.3× the airspeed"; for the JNB ↔ Sydney mirror demo the ratio is **2.7×**),
 - or refuse to compute ground speed at all (in which case it cannot match airline operational data).
+
+These ratios are computed live on the [Live Demonstrations](live/) page using his own functions (`greatCircleArc` from `flightRoutes.js`, `aeProject` from `canonical.js`).
 
 The model takes a third option: compute the answer using globe physics, hide the units behind a relabel, and decline to report linear values that would expose the dependency.
 

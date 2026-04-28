@@ -4,6 +4,43 @@ Cross-session continuity log. Newest entry on top. Each entry: date, what was do
 
 ---
 
+## 2026-04-28 — v1.1 (live demonstrations page)
+
+**What landed:**
+
+- New `docs/live/` page with three working demonstrations:
+  1. **Equal Arc, Unequal Disc** — picker between two pairs (JNB↔Sydney mirror, SCL↔Sydney vs JFK↔"Persian Gulf"), renders both arcs on his AE projection and computes the disc-cartesian length ratio. Verified: JNB-mirror = 2.700×, SCL-Sydney vs JFK-Persian = 3.295×.
+  2. **QF27/QF28 in mph** — reads the four bundled flight summaries, displays `deg/h` alongside `mph` for both Air Speed and Ground Speed, exposes the `MI_PER_DEG = 69.0936` conversion.
+  3. **One Geometry, Twenty Skins** — same SCL↔Sydney route through four projection skins (AE, Mercator, AE-Dual, Lambert AEA polar). Demonstrates that all projections receive identical lat/lon from the same `greatCircleArc()` call — only the skin varies.
+
+- New files:
+  - `docs/live/index.html` — page chrome, three sections + "Coming next" planned demos.
+  - `docs/live/demos.js` — mounts each demo. Pure ES module; uses `<script type="module">`.
+  - `docs/live/projection.js` — re-implementations of the subject's own `aeProject`, `equirect`, `mercator`, `aeDual`, `laeaPolar`, `greatCircleArc`, `centralAngleDeg`, plus `discArcLength` helper.
+  - `docs/live/data.js` — extracted QF27/28 summary stats, his city list (with `real: true/false` flag for synthetic anchors), the constants `MI_PER_DEG` and `SUBJECT_URL`, the pinned upstream commit hash.
+
+- Updated tabs:
+  - `01-globe-physics-in-disc-costume.md` Finding 7 — replaced the "roughly 2×" prose estimate with the verified live numbers (2.70× / 3.30×) and pointed at the live page.
+  - `03-co-opted-demo.md` — replaced the "in development" placeholder with a description of the v1 live page, including a "why this approach" note explaining why a true overlay-on-his-iframe approach was abandoned (cross-origin restrictions on his Pages domain + no LICENSE file in his repo).
+  - `README.md` — updated the "Co-opted model" link description and the tab 4 description.
+
+**Approach decisions taken (record for future sessions):**
+
+- Cross-origin restrictions made it impossible for our hosted page to read the URL hash of an iframe pointing at his sim. So we abandoned the "iframe + analysis sidebar" plan and went to "re-execute his published functions in our own page."
+- His repo has no LICENSE file. Copying his JS sources verbatim into our repo is a licensing question without an obvious answer. The current page imports nothing of his — every formula in `projection.js` is an independent re-implementation of his algorithms (with his variable names preserved for clarity), and the data in `data.js` is hand-extracted summary statistics. Verbatim quotation of his code only happens in `<pre>` blocks for review purposes (fair use).
+- All numbers on the live page are computed live; no hardcoded ratios or speeds. The disc-arc lengths recompute every render. If we change the projection function or the city coordinates, the page reflects it.
+
+**Verified locally** with `python3 -m http.server`: all routes return 200, all three modules parse, the demo math matches an independent node-side computation.
+
+**Remaining (next session):**
+
+1. The three "Coming next" demos called out at the bottom of `live/index.html`: sun altitude interpolated vs spherical, GeoC-fallback exposure, annotated source viewer.
+2. The `monitor/` claim-checker matching the dome-model-review pattern.
+3. `data/` machine-readable claim ledger.
+4. PDF export.
+
+---
+
 ## 2026-04-28 — v1 (initial publish)
 
 **Built by:** Claude (Cowork session) + steve.

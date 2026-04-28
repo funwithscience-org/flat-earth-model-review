@@ -1,8 +1,30 @@
 # Co-opted Demo
 
-This tab will host a modified fork of the subject's three.js scene, served from `flat-earth-model-review/live/`. The fork keeps the author's code as the substrate and adds an overlay layer that surfaces, inside his own UI, the issues catalogued in the **Globe Physics in a Disc Costume** and **AI Stacking** tabs.
+A live page that reproduces several of the subject model's demos using his own functions and bundled data, with the exposing instrumentation built in. Each section computes its numbers in real time from his source — no paraphrasing, no estimates.
 
-The fork is in development. The plan and the specific modifications are documented here so the design can be reviewed before the build.
+**[Open the live demonstrations page →](live/)**
+
+The page (v1) carries three demonstrations:
+
+1. **Equal Arc, Unequal Disc** — renders his "Equal Arc Flight (N/S)" pairs on his canonical AE projection and measures the actual disc-cartesian path length each arc gets drawn with. For Johannesburg ↔ Sydney vs its lat-mirrored northern partner the ratio is **2.70×**; for Santiago ↔ Sydney vs his JFK ↔ "Persian Gulf" same-central-angle pair it is **3.30×**. His demos drive both legs with a single normalized progress tween so they finish at the same wall-clock time, and label the result *"Equal arc → equal time, regardless of projection distortion."* If the disc is the territory, the southern plane has to fly 2.7–3.3× faster than the northern one to match.
+2. **QF27/QF28 in mph** — reads the four bundled flight-track summaries from his `flightTracks.js` and shows the "deg/h" units his demo displays alongside the mph values they were computed from. Per-flight conversion through his hard-coded `MI_PER_DEG = 69.0936` constant from `js/demos/flightRoutes.js:46`. The mph numbers are the ones his model has but is configured not to display.
+3. **One Geometry, Twenty Skins** — renders Santiago ↔ Sydney through four different projection skins from his `js/core/projections.js` registry (AE, Mercator, AE-Dual, Lambert AEA polar). The `(lat, lon)` coordinates feeding every dot are identical in all four panels, because per `canonical.js` his coordinate framework is hard-coded north-pole AE regardless of which "FE Map" the user has selected.
+
+## Coming next
+
+The page also enumerates demonstrations planned for v2: a side-by-side sun-altitude readout (interpolated `headroom = 0.12` value vs spherical RA/Dec → Az/El identity), a multi-pipeline ephemeris query that surfaces the silent `DE405 → GeoC → VSOP87 → Ptolemy` fallback, and an annotated source viewer pinned to the upstream commit hash so finding-citations can detect drift.
+
+## Why this approach
+
+The original plan was to clone his three.js scene as a substrate and inject an overlay layer that surfaced the contradictions inside his own UI. That approach hit two practical limits: cross-origin restrictions block our hosted page from reading the iframe state of his GitHub-Pages-served sim, and copying his source into our repo for hands-on modification creates licensing concerns (his repo carries no top-level LICENSE file). The "live demonstrations" page below threads both problems: every number is computed by re-running his own published functions on his own bundled data, with full attribution, and the demonstrations that need to expose his disc-projection geometry directly do so by importing his own `aeProject` / `greatCircleArc` / `centralAngleDeg` formulae verbatim from `js/core/canonical.js` and `js/data/flightRoutes.js`. There is no fork; there is a re-execution.
+
+If a future session prefers the deeper "overlay inside his UI" approach, [the original design plan is preserved below](#the-original-overlay-design).
+
+---
+
+## The original overlay design
+
+The seven planned overlays remain a useful reference for v2.
 
 ## Design principles
 
