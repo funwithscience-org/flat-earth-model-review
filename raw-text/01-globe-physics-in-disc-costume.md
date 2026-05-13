@@ -209,7 +209,7 @@ A genuinely flat-earth model would have to either:
 
 These ratios are computed live on the [Live Demonstrations](live/) page using his own functions (`greatCircleArc` from `flightRoutes.js`, `aeProject` from `canonical.js`).
 
-The model takes a third option: compute the answer using globe physics, hide the units behind a relabel, and decline to report linear values that would expose the dependency.
+The model takes a third option: compute the answer using globe physics, hide the units behind a relabel, and decline to report linear values that would expose the dependency. **The broader pattern — that this works because cos(lat) symmetry on a globe makes north/south same-`|lat|` pairings line up, and breaks the moment latitude bands are crossed — is the subject of Finding 10 below.**
 
 ## Finding 8 — The "Equal Arc" demo proves a sphere theorem and frames it as flat-earth evidence
 
@@ -268,6 +268,64 @@ The fallback chain begins at DE405. So when a user selects "GeoC" — the only p
 
 A user who toggles between pipelines in the comparison view sees the GeoC failure (planets drifting tens of degrees off DE405). A user who simply selects GeoC and renders normally sees DE405-quality output and reasonably concludes that "the geocentric model works." The model is hiding its own failure with a silent substitution.
 
+## Finding 10 — Same Δlon, different latitudes: the northern distance problem
+
+> **MISLEADING · SELF-CON**
+> Investigated 2026-05-13 · interactive evidence on the [Co-opted Demo](#tab-demo) tab
+
+[Finding 8](#finding-8--the-equal-arc-demo-proves-a-sphere-theorem-and-frames-it-as-flat-earth-evidence) grants that his lat-mirror demos line up because of sphere symmetry: same `|lat|` north and south share the same cos(lat) factor, so the same Δlon converts to the same real distance, and the flight times match. The symmetry is borrowed from the globe; his framing borrows the symmetry without naming it. The harder question is what happens when the symmetry is crossed.
+
+His operative framing — *equal central angle implies equal arc length implies equal flight time* — has a hidden assumption: that the conversion from degrees-of-longitude to distance is uniform across the disc. At the equator a degree of longitude is 60 nautical miles. On a globe, away from the equator, that drops by cos(lat). His code knows this (`centralAngleDeg` applies cos(lat) explicitly in the spherical law of cosines). His rhetoric does not.
+
+### What this looks like in real airline operations
+
+Three real direct flights at very different latitudes, every figure from airline operational data:
+
+| Route | Operator | Avg `|lat|` | Δlon | Globe distance | Real flight time |
+|---|---|---|---|---|---|
+| Sydney ↔ Santiago | Qantas QF27/QF28 (787-9) | -34°S | **138°** | 6,135 nm | ~13 hours |
+| JFK ↔ Tashkent | Uzbekistan Airways HY101/HY102 | +41°N | **143°** | 5,490 nm | ~12 hours |
+| Helsinki ↔ Tokyo (NRT) | Finnair AY073 | +47°N | 116° | 4,800 nm | ~10 hours |
+
+The flight that covers the *most* Δlon (JFK ↔ Tashkent, 143°) covers the *least* great-circle distance and takes essentially the same wall-clock time as Sydney ↔ Santiago. This is impossible under his "everything is degrees" framing. The cos(lat) compression — explicit in his code, invisible in his rhetoric — is what makes the real-world numbers consistent.
+
+### Same Δlon at four latitudes
+
+Push the structural problem to its limit. Take a single Δlon = 138° (the Sydney–Santiago value) and ask the spherical-law-of-cosines what the central angle is at four different latitudes:
+
+| Latitude | Δlon | Central angle (his code) | Real distance (60 nm/°) | "Δlon × 60 nm" rhetoric | Implied flight time at 525 mph |
+|---|---|---|---|---|---|
+| 0° (equator) | 138° | 138° | **8,280 nm** | 8,280 nm | ~17 hours |
+| -34°S (SCL↔SYD, real) | 138° | 102° | 6,135 nm | 8,280 nm | ~13 hours |
+| +60°N | 138° | 60° | 3,600 nm | 8,280 nm | ~7.5 hours |
+| +80°N | 138° | 18.6° | **1,116 nm** | 8,280 nm | ~2.5 hours |
+
+From equator to +80°N at the *same* Δlon, the real great-circle distance shrinks by a factor of ~7.4×. His disc visualisation correctly shows the polar arc as a tiny ring near the disc centre; his code returns the matching small central angle; only his rhetoric demands all four be the same flight time at the same airspeed. **Three independent representations of the model, three different answers.** The disc and the code agree with airline operations. The framing does not.
+
+### The northern distance problem
+
+The standard flat-earth critique of an AE-projection world map is the *southern distance problem*: the AE disc makes the southern hemisphere look enormous, so southern flights should take 2–3× longer than they actually do, and don't. The standard flat-earth dodge is to detach map-distance from real-distance: *the disc is just a projection; what counts is degrees.* The subject's "Equal Arc → Equal Time" framing is that dodge, sharpened.
+
+But the moment you accept *degrees-are-what-counts* as your framing, you have implicitly committed to the sphere geometry that gives degrees their meaning — because on a sphere, central angle is well-defined, while on a flat disc it has no geometric content. Once committed to sphere geometry, you import the cos(lat) compression on longitudes whether you intended to or not. Cos(lat) compression at the equator is 1.0; at the pole it is 0. **A degree of longitude at the north pole is, literally, zero nautical miles.** The disc visualisation correctly shrinks polar latitude circles toward the centre, so the disc and the sphere agree at the pole. What disagrees is the framing — which demands a degree be a degree wherever you are.
+
+The subject's model **does not solve the southern distance problem.** It moves the problem to the north pole, where it grows worse the closer you get. At 80°N, the framing's prediction of 17 hours for 138° of Δlon is off by a factor of ~7 from what the same code and the same disc both report.
+
+### Not a flat-earth-grid model either
+
+A separate flat-earth sub-community subscribes to a *flat-earth grid* interpretation in which 60 nm = 1° applies uniformly to both latitude and longitude across the disc — i.e., flight distance is just `√(Δlat² + Δlon²) × 60 nm` regardless of position. The subject's code is not doing this. The flight-routes module's `centralAngleDeg` function applies the spherical law of cosines (`cos(c) = sin(φ₁)·sin(φ₂) + cos(φ₁)·cos(φ₂)·cos(Δλ)`), which is the globe identity with the cos(lat) compression on the longitudinal term. For Sydney ↔ Santiago, that gives 102° central angle and ~6,135 nm; the flat-earth-grid formula would give `√(0.55² + 138²) × 60 = 8,281 nm`, off by 35%. **The flat-earth-grid hypothesis is wrong on the same route the subject's code is right on.** Anyone watching his demos who walks away with the flat-earth-grid intuition has been double-deceived: the framing implies it, the code refutes it, the airline data confirms the code.
+
+### Interactive evidence
+
+The [Co-opted Demo](#tab-demo) tab renders these scenarios directly. The picker offers three positions:
+
+- **Steelman** — JNB ↔ Sydney mirror demo. Same |lat|, same flight time. No contradiction. We credit it.
+- **Contradiction** — JFK ↔ Tashkent vs Santiago ↔ Sydney. Different Δlon (143° vs 138°), different latitudes (+41° vs -34°), same wall-clock time (~12 hours). Framing has no answer.
+- **Killer** — 138° Δlon at four latitudes (equator, -34°S, +60°N, +80°N). Animations run at proportional real-world speeds, so the polar plane finishes in ~3 seconds while the equatorial plane takes ~18 seconds. Floating balloons show traversed/total nm on the globe and degrees on the disc. Same Δlon, four flight times.
+
+Every arc on both views is generated from the subject's own `greatCircleArc()` function. The disc projects through his `canonicalLatLongToDisc()`. The numerical readout under each pair shows the central angle his code reports, the real great-circle distance, the "Δlon × 60 nm" flat-earth-grid prediction with percent error, and the real airline flight time. No flat-earther can claim the demo uses different math for the two views — it's one function feeding two visualisations.
+
 ## Summary
 
 The subject's load-bearing physics is globe physics. Where it produces an answer, the answer was produced by the spherical-earth identities, with the Earth's circumference baked in as a hardcoded constant, and only at the final render step does the disc enter as a paint surface. The flat-earth claim is a UI assertion, not a physical commitment.
+
+Crucially: the subject's framing — *equal central angle implies equal flight time* — works exactly when sphere symmetry makes it work (lat-mirror pairs, Finding 8) and fails exactly when sphere symmetry is crossed (different latitudes at the same Δlon, Finding 10). Both behaviours are properties of the globe. The flat-earth disc is the surface they're rendered onto, not the surface they're computed on.
