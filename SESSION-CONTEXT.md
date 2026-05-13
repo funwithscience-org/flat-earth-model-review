@@ -4,6 +4,39 @@ Cross-session continuity log. Newest entry on top. Each entry: date, what was do
 
 ---
 
+## 2026-05-13 — v1.9 (drift check + refresh against upstream HEAD)
+
+**Re-verification pass.** Checked every finding in the review against the subject's current upstream HEAD. 189 commits past our `8b0921a` analysis pin. **Math integrity: PASSED.** Every globe-function finding (F1 `MI_PER_DEG`, F2 `greatCircleArc`, F3 `centralAngleDeg`, F4 `raDecToAzEl`, F5 `headroom = 0.12`, F7 QF27/28 mph-in-disguise, F8 Equal Arc demo) still verifiable in the current source.
+
+**Two material edits since pin:**
+
+1. **`ephemerisGeo.js` comment sanitization** (upstream commit [`4ab831d`](https://github.com/AlanSpaceAudits/conceptual_flat_earth_model/commit/4ab831d), 2026-04-28T20:12Z, 8 hours after our pin). The *"Consequence (stated honestly): inner planets do not librate about the Sun in this model, and no planet exhibits retrograde motion. RA/Dec values diverge from real ephemeris positions by large amounts"* admission was deleted from the source comments. The replacement comment is neutral and non-admitting. **The code is unchanged.** The commit message itself states the intent: *"Header / orbit-elements block / function comments dropped the editorialising about retrograde / inner-planet libration / RA-Dec divergence."*
+
+2. **`canonical.js` extended with opt-in projection override**. The canonical lat/long → disc framework, previously hard-coded north-pole AE *"regardless of the loaded map art / projection,"* now supports `setActiveProjection(id)` for projections that opt in via `useProjectionGrid: true`. As of HEAD, two projections drive the geometry: `ae_dual` (the dual-pole AE world model) and `canters_w20` (Frank Canters' polyconic W20 centered on Boulder CO — added since our pin). The remaining 18+ projection skins are still *"treated as decorative art only and don't override the framework"* per the file's current comment.
+
+**Updates landed in this pass:**
+
+- **Finding 6** (`raw-text/01-...`): added a "Note (2026-05-13)" paragraph describing the partial fix. The criticism survives in softer form.
+- **Finding 9** (`raw-text/01-...`): kept the verbatim "stated honestly" quote (it documents the source as of pin `8b0921a`), and added a "Note (2026-05-13)" flagging that it was deleted in commit `4ab831d` with the new replacement text shown. Code-unchanged is emphasised.
+- **AI Stacking tab** (`raw-text/02-...`): new **Tell 6 — Post-publication comment sanitization**, documenting the response-pattern (delete the honest comment, leave the broken code). Added a 6th item to the "note for readers" red-flag list with the parallel pattern.
+
+**Pin policy going forward:**
+
+- **Original-analysis pin** stays at `8b0921a` (2026-04-28). All verbatim quotes in the review refer to this commit; quoted text is authoritative as-of that hash.
+- **Last-verified pin** is a moving stamp. Currently `fce7d74` (2026-05-13). Each re-verification pass updates this and may add new findings (like Tell 6) when behaviour drifts or comments get edited.
+- When citing verbatim text that has since been deleted, link to `<commit>^` on GitHub so readers can view the original.
+
+**Verification methodology used:**
+
+- Compared key files at pin vs HEAD via `raw.githubusercontent.com/<repo>/<hash>/<path>` curls.
+- Walked through every Finding in the review, locating the cited code/comment at HEAD with grep.
+- Verified the upstream commit hash and timestamp for each material edit via GitHub commits API.
+- Documented the diff between pinned and current text for any edits.
+
+**Worth doing next time:** formalise this verification as `monitor/run.js` so it can be checked on a schedule (matching the dome-model-review monitor pattern). Each finding becomes an assertion: file path + expected snippet at pinned commit vs at HEAD; flag drift.
+
+---
+
 ## 2026-04-28 — v1.1 (live demonstrations page)
 
 **What landed:**

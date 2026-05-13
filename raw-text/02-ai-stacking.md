@@ -112,6 +112,23 @@ A subjective tell, included for completeness. The prose style of the comments �
 
 A human author may write this way. An AI assistant invariably does. The presence of this register across hundreds of source files and across the user-facing About text, in unbroken stylistic uniformity, is consistent with a workflow in which an assistant writes the prose layer.
 
+## Tell 6 — Post-publication comment sanitization
+
+> **AI-STACK · POST-HOC EDIT**
+> Added 2026-05-13 (re-verification pass against upstream HEAD `fce7d74`)
+
+Worth recording for the same reason the original admissions are recorded: the response to having those admissions surfaced is itself a tell. Within hours of this review being pinned and published at upstream commit `8b0921a` (2026-04-28T11:00Z), the subject's `ephemerisGeo.js` was modified to remove the *"stated honestly"* admission about the GeoC pipeline's failures. Commit [`4ab831d`](https://github.com/AlanSpaceAudits/conceptual_flat_earth_model/commit/4ab831d) (S647), timestamped 2026-04-28T20:12Z — eight hours after pin — is titled *"ephemerisGeo.js comments rewritten in kinematics framing,"* and the commit message itself states the intent of the change:
+
+> *"Header / orbit-elements block / function comments dropped the editorialising about retrograde / inner-planet libration / RA-Dec divergence."*
+
+The new wording, at HEAD as of 2026-05-13, describes the same code as *"a kinematic position-over-time function for each planet, parameterised by Schlyter's Earth-focus Kepler elements"* — neutral, non-admitting. **The code itself is byte-for-byte identical to the version analysed in this review.** The pipeline still produces wrong planet positions; the dispatcher still silently substitutes DE405 for what the user requested as GeoC; the behaviour is unchanged.
+
+This pattern — *"if the comment is embarrassing, edit the comment, not the code"* — is the visible-archaeology analogue of Tell 2 (silent fallbacks hidden behind a dispatcher). In Tell 2, the workflow hides failures behind a routing layer that quietly does the right thing while the user thinks the wrong thing is running. In Tell 6, the workflow hides failures by rewriting the prose layer that documents them. Both leave the underlying behaviour untouched.
+
+We do not know whether the author or an AI assistant directed the edit. Either way, the response shape — *delete the honest comment within hours of it being quoted in an external review, leave the broken code in place* — is consistent with the broader stacking pattern documented above. The prose layer is rapidly malleable; the underlying behaviour is not.
+
+The original *"stated honestly"* comment is preserved in this review (see [Globe Physics in a Disc Costume, Finding 9](#tab-physics)) as it stood at upstream commit `8b0921a`. Anyone checking the current source will find the new neutral wording instead. A reader wishing to verify our quote can use GitHub's commit history at the parent of [`4ab831d`](https://github.com/AlanSpaceAudits/conceptual_flat_earth_model/commit/4ab831d) and see the original text in place.
+
 ## What this means for the model
 
 None of these tells refute the model on technical grounds. The technical refutation is in the previous tab. What they refute is the *implicit framing*: that this is a serious flat-earth physics project that has happened to use globe-derived data sources for inputs.
@@ -127,5 +144,6 @@ The pattern recognisable here generalises. When evaluating an interactive scient
 3. **Are the input data, calibration constants, and observational catalogues sourced from the orthodox model the site claims to refute?** If yes, the orthodox model is doing the work and the site is rebadging the output.
 4. **Does the source code carry comments addressed to or about an absent operator/role/?** *("the asked not to fake this", "the operator preferred we...")* Those leaks reveal the actual chain of authorship.
 5. **Is the iteration trail (backup files, multi-hundred-K change logs, serial-numbered checkpoints) preserved in the repo?** Long iterative AI-assisted authorship leaves recognisable archaeology.
+6. **When a public review surfaces an embarrassing self-admission in the source comments, does the next upstream commit silently delete the comment without changing the underlying code?** That pattern — *editing the prose, not the behaviour* — confirms the prose layer is malleable to the same workflow that produces the rest of the content, and that the operator's response to scrutiny is to sand off the documentation rather than fix the implementation.
 
-The Conceptual Flat Earth Model exhibits all five.
+The Conceptual Flat Earth Model exhibits all six.

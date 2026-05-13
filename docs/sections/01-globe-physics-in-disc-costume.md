@@ -169,6 +169,8 @@ The UI offers twenty map-projection choices: AE, AE-Dual, Mercator, Mollweide, R
 
 This produces a specific contradiction with the AE-Dual map skin, which paints the south pole as a discrete point on the disc. The math layer treats the south pole as the entire disc edge (a circle of `r = 1`). Selecting AE-Dual displays a map whose stated geometry (two distinct poles) directly contradicts the geometry the simulator is using underneath. The user sees one geometry and the simulation runs another.
 
+> **Note (added 2026-05-13).** As of upstream commits after our initial analysis pin (`8b0921a`, 2026-04-28), the canonical-projection framework was extended with an opt-in override mechanism `setActiveProjection(id)`. Two projections now drive the geometry rather than the default north-pole AE: `ae_dual` (the dual-pole AE world model — the specific contradiction noted above appears to have been resolved by giving AE-Dual its own coordinate framework) and `canters_w20` (Frank Canters' polyconic W20, centered on Boulder CO — a new addition since the original analysis). The remaining 18+ projections in the registry — Mercator, equirect, Mollweide, Robinson, Winkel Tripel, Hammer, Aitoff, Equal Earth, Eckert IV, Sinusoidal, Hellerick, Proportional AE, Orthographic, Lambert AEA, Gleason's, plus the HQ raster variants — are still *"treated as decorative art only and don't override the framework,"* per the file's current comment. The criticism survives, in softer form: the model now has three distinct coordinate frameworks (default AE + two opt-ins), not one, but the remaining 18+ projection skins are still cosmetic.
+
 ## Finding 7 — The QF27/QF28 demo's "ground speed" is mph in disguise
 
 > **STD MODEL · MISLEADING**
@@ -248,6 +250,15 @@ For the non-mirror "Equal Arc" demo, the author needed a northern-hemisphere rou
 // amounts. The trade is deliberate: this pipeline is *structurally*
 // geocentric at every stage.
 ```
+
+> **Note (added 2026-05-13).** This admission was *deleted* from `ephemerisGeo.js` in upstream commit `4ab831d` (titled "S647: ephemerisGeo.js comments rewritten in kinematics framing"), 2026-04-28T20:12Z — eight hours after this review was pinned at `8b0921a`. The commit's own message acknowledges the change: *"Header / orbit-elements block / function comments dropped the editorialising about retrograde / inner-planet libration / RA-Dec divergence."* The neutral replacement comment, in place at HEAD as of 2026-05-13, now reads:
+>
+> ```js
+> // GeoC pipeline — kinematic position-over-time function for each
+> // planet, parameterised by Schlyter's Earth-focus Kepler elements.
+> ```
+>
+> **The code is unchanged.** The pipeline still produces RA/Dec that diverge wildly from observed planet positions; the dispatcher's fallback chain `DE405 → GeoC → VSOP87 → Ptolemy` still silently substitutes DE405 when GeoC can't deliver. The only thing removed is the honest commentary about what the pipeline gets wrong. The pattern itself — *delete the embarrassing comment, leave the broken code in place* — is documented separately as **Tell 6** in the AI Stacking tab.
 
 The model's About text frames the five ephemeris pipelines as a comparison sandbox. In practice, four of the five do not drive the rendering. The default pipeline is DE405, which is the heliocentric JPL ephemeris. Each of the others has documented coverage gaps. From the same About:
 
